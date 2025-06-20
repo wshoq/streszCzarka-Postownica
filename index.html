@@ -48,12 +48,15 @@
     const datePicker = document.getElementById('datePicker');
     const container = document.getElementById('posts');
 
-    // Funkcja do formatowania daty z title "DD.MM.YYYY, HH:mm:ss" na "YYYY-MM-DD"
     function parseTitleDateToISO(titleDate) {
-      // titleDate np. "20.06.2025, 20:03:39"
       const [datePart] = titleDate.split(',');
       const [day, month, year] = datePart.trim().split('.');
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    function linkify(text) {
+      const urlRegex = /https?:\/\/[^\s]+/g;
+      return text.replace(urlRegex, match => `<a href="${match}" target="_blank" rel="noopener noreferrer">link</a>`);
     }
 
     function fetchPosts() {
@@ -72,13 +75,12 @@
         return res.json();
       })
       .then(posts => {
-        const selectedDate = datePicker.value; // format: "YYYY-MM-DD"
+        const selectedDate = datePicker.value;
         if (!selectedDate) {
           container.innerHTML = '<p>Wybierz datę, aby zobaczyć artykuły.</p>';
           return;
         }
 
-        // Filtrujemy posty, które mają date publikacji równą selectedDate
         const filteredPosts = posts.filter(post => {
           if (!post.title) return false;
           const postDateISO = parseTitleDateToISO(post.title);
@@ -95,7 +97,7 @@
           container.innerHTML += `
             <article>
               <h2>${post.title}</h2>
-              <p>${post.content}</p>
+              <p>${linkify(post.content)}</p>
             </article>
           `;
         });
@@ -106,14 +108,11 @@
       });
     }
 
-    // Nasłuchuj zmiany daty
     datePicker.addEventListener('change', fetchPosts);
 
-    // Opcjonalnie: ustaw dzisiejszą datę jako domyślną i od razu ładuj posty
     const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
     fetchPosts();
-
   </script>
 </body>
 </html>
