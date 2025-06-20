@@ -33,27 +33,41 @@
   <div id="posts">Ładowanie...</div>
 
   <script>
-    const SUPABASE_URL = "undefined";
-    const SUPABASE_KEY = "undefined";
+    // Podmień tutaj na swoje wartości z Supabase (anonimowy klucz)
+    const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc
+";
 
     fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc`, {
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
+        Authorization: `Bearer $eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc
+`
       }
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error(`Błąd sieci: ${res.status}`);
+      return res.json();
+    })
     .then(posts => {
       const container = document.getElementById('posts');
       container.innerHTML = '';
 
-      if (posts.length === 0) {
+      if (!posts || posts.length === 0) {
         container.innerHTML = '<p>Brak postów.</p>';
         return;
       }
 
       posts.forEach(post => {
-        const date = new Date(post.created_at).toLocaleString();
+        const date = new Date(post.created_at).toLocaleString('pl-PL', {
+          timeZone: 'Europe/Warsaw',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
         container.innerHTML += `
           <article>
             <h2>${post.title}</h2>
@@ -65,7 +79,7 @@
     })
     .catch(err => {
       console.error(err);
-      document.getElementById('posts').innerHTML = '<p>Błąd podczas ładowania postów.</p>';
+      document.getElementById('posts').innerHTML = `<p>Błąd podczas ładowania postów: ${err.message}</p>`;
     });
   </script>
 </body>
