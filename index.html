@@ -1,47 +1,84 @@
-<script>
-  const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
-
-  fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc`, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Moje Artykuły</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: auto;
+      padding: 2rem;
+      background: #f7f7f7;
     }
-  })
-  .then(res => {
-    if (!res.ok) throw new Error(`Błąd sieci: ${res.status}`);
-    return res.json();
-  })
-  .then(posts => {
-    const container = document.getElementById('posts');
-    container.innerHTML = '';
-
-    if (!posts || posts.length === 0) {
-      container.innerHTML = '<p>Brak postów.</p>';
-      return;
+    article {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+    h2 {
+      margin-top: 0;
+    }
+    .date {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📰 Moje Artykuły</h1>
+  <div id="posts">Ładowanie...</div>
 
-    posts.forEach(post => {
-      const date = new Date(post.created_at).toLocaleString('pl-PL', {
-        timeZone: 'Europe/Warsaw',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+  <script>
+    // Podmień na swoje wartości z Supabase
+    const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
+
+    fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`Błąd sieci: ${res.status}`);
+      return res.json();
+    })
+    .then(posts => {
+      const container = document.getElementById('posts');
+      container.innerHTML = '';
+
+      if (!posts || posts.length === 0) {
+        container.innerHTML = '<p>Brak postów.</p>';
+        return;
+      }
+
+      posts.forEach(post => {
+        const date = new Date(post.created_at).toLocaleString('pl-PL', {
+          timeZone: 'Europe/Warsaw',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        container.innerHTML += `
+          <article>
+            <h2>${post.title}</h2>
+            <div class="date">${date}</div>
+            <p>${post.content}</p>
+          </article>
+        `;
       });
-      container.innerHTML += `
-        <article>
-          <h2>${post.title}</h2>
-          <div class="date">${date}</div>
-          <p>${post.content}</p>
-        </article>
-      `;
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('posts').innerHTML = `<p>Błąd podczas ładowania postów: ${err.message}</p>`;
     });
-  })
-  .catch(err => {
-    console.error(err);
-    document.getElementById('posts').innerHTML = `<p>Błąd podczas ładowania postów: ${err.message}</p>`;
-  });
-</script>
+  </script>
+</body>
+</html>
