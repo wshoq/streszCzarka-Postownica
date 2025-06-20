@@ -33,11 +33,11 @@
   <div id="posts">Ładowanie...</div>
 
   <script>
-    // Podmień na swoje wartości z Supabase
+    // Podmień tutaj na swoje wartości z Supabase (anonimowy klucz)
     const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
+    const SUPABASE_KEY = "TWOJ_ANONIMOWY_KLUCZ"; // Upewnij się, że to anon key, nie sekret
 
-    fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc`, {
+    fetch(`${SUPABASE_URL}/rest/v1/posts?select=title,content`, {
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`
@@ -48,6 +48,7 @@
       return res.json();
     })
     .then(posts => {
+      console.log('posts from supabase:', posts);
       const container = document.getElementById('posts');
       container.innerHTML = '';
 
@@ -57,19 +58,9 @@
       }
 
       posts.forEach(post => {
-        const date = new Date(post.created_at).toLocaleString('pl-PL', {
-          timeZone: 'Europe/Warsaw',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
         container.innerHTML += `
           <article>
             <h2>${post.title}</h2>
-            <div class="date">${date}</div>
             <p>${post.content}</p>
           </article>
         `;
