@@ -24,21 +24,38 @@
     h2 {
       margin-top: 0;
     }
-    label {
-      font-size: 1.1rem;
-      display: block;
-      margin-bottom: 0.5rem;
+
+    .date-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
+    .date-controls button {
+      font-size: 1.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #6c757d;
+      color: white;
+      cursor: pointer;
+    }
+    .date-controls button:hover {
+      background-color: #5a6268;
+    }
+
     input[type="date"] {
       font-size: 1.2rem;
       padding: 0.5rem;
-      margin-bottom: 1.5rem;
-      width: 100%;
-      max-width: 300px;
+      width: 180px;
     }
+
     .button-group {
+      text-align: center;
       margin-bottom: 1.5rem;
     }
+
     .big-button {
       font-size: 1.2rem;
       padding: 0.75rem 1.5rem;
@@ -57,8 +74,11 @@
 <body>
   <h1>📰 Krypto Treści</h1>
 
-  <label for="datePicker">Wybierz datę:</label>
-  <input type="date" id="datePicker" />
+  <div class="date-controls">
+    <button id="prevDayBtn">←</button>
+    <input type="date" id="datePicker" />
+    <button id="nextDayBtn">→</button>
+  </div>
 
   <div class="button-group">
     <a href="uran.html">
@@ -74,6 +94,8 @@
 
     const datePicker = document.getElementById('datePicker');
     const container = document.getElementById('posts');
+    const prevDayBtn = document.getElementById('prevDayBtn');
+    const nextDayBtn = document.getElementById('nextDayBtn');
 
     function parseTitleDateToISO(titleDate) {
       const [datePart] = titleDate.split(',');
@@ -132,6 +154,16 @@
       });
     }
 
+    function shiftDate(days) {
+      const current = new Date(datePicker.value);
+      current.setDate(current.getDate() + days);
+      const iso = current.toISOString().split('T')[0];
+      datePicker.value = iso;
+      fetchPosts();
+    }
+
+    prevDayBtn.addEventListener('click', () => shiftDate(-1));
+    nextDayBtn.addEventListener('click', () => shiftDate(1));
     datePicker.addEventListener('change', fetchPosts);
 
     const today = new Date().toISOString().slice(0, 10);
