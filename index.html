@@ -18,33 +18,36 @@
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+    h1 {
+      text-align: center;
+    }
     h2 {
       margin-top: 0;
     }
-    label, input, button {
-      font-size: 1rem;
-      margin-bottom: 1rem;
+    label {
+      font-size: 1.1rem;
       display: block;
+      margin-bottom: 0.5rem;
+    }
+    input[type="date"] {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 300px;
     }
     .button-group {
-      margin-bottom: 1rem;
-    }
-    button {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      background-color: #007bff;
-      color: white;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #0056b3;
+      margin-bottom: 1.5rem;
     }
     .big-button {
       font-size: 1.2rem;
       padding: 0.75rem 1.5rem;
       background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
     }
     .big-button:hover {
       background-color: #b02a37;
@@ -58,7 +61,6 @@
   <input type="date" id="datePicker" />
 
   <div class="button-group">
-    <button id="defaultSourceBtn">📄 Artykuły Krypto</button>
     <a href="uran.html">
       <button class="big-button">☢️ Pokaż Uran</button>
     </a>
@@ -72,9 +74,6 @@
 
     const datePicker = document.getElementById('datePicker');
     const container = document.getElementById('posts');
-    const defaultSourceBtn = document.getElementById('defaultSourceBtn');
-
-    let currentTable = "posts";
 
     function parseTitleDateToISO(titleDate) {
       const [datePart] = titleDate.split(',');
@@ -90,7 +89,7 @@
     function fetchPosts() {
       container.innerHTML = "Ładowanie...";
 
-      fetch(`${SUPABASE_URL}/rest/v1/${currentTable}?select=title,content&order=title.desc&limit=100`, {
+      fetch(`${SUPABASE_URL}/rest/v1/posts?select=title,content&order=title.desc&limit=100`, {
         headers: {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
@@ -98,10 +97,7 @@
           'Accept': 'application/json'
         }
       })
-      .then(res => {
-        if (!res.ok) throw new Error(`Błąd sieci: ${res.status}`);
-        return res.json();
-      })
+      .then(res => res.ok ? res.json() : Promise.reject(`Błąd sieci: ${res.status}`))
       .then(posts => {
         const selectedDate = datePicker.value;
         if (!selectedDate) {
@@ -132,15 +128,11 @@
       })
       .catch(err => {
         console.error(err);
-        container.innerHTML = `<p>Błąd podczas ładowania postów: ${err.message}</p>`;
+        container.innerHTML = `<p>Błąd podczas ładowania postów: ${err}</p>`;
       });
     }
 
     datePicker.addEventListener('change', fetchPosts);
-    defaultSourceBtn.addEventListener('click', () => {
-      currentTable = "posts";
-      fetchPosts();
-    });
 
     const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
