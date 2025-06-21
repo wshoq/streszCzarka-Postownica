@@ -24,22 +24,31 @@
     h2 {
       margin-top: 0;
     }
-    .date {
-      color: #666;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
     a {
-      color: #007bff;
       text-decoration: none;
     }
-    a:hover {
-      text-decoration: underline;
+    .back-button {
+      display: inline-block;
+      margin-bottom: 2rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.2rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
   <h1>☢️ Artykuły Uran</h1>
+
+  <a href="index.html"><button class="back-button">← Powrót do artykułów</button></a>
+
   <div id="posts">Ładowanie...</div>
 
   <script>
@@ -62,10 +71,7 @@
           'Accept': 'application/json'
         }
       })
-      .then(res => {
-        if (!res.ok) throw new Error(`Błąd sieci: ${res.status}`);
-        return res.json();
-      })
+      .then(res => res.ok ? res.json() : Promise.reject(`Błąd sieci: ${res.status}`))
       .then(posts => {
         if (posts.length === 0) {
           container.innerHTML = `<p>Brak artykułów Uran.</p>`;
@@ -84,11 +90,10 @@
       })
       .catch(err => {
         console.error(err);
-        container.innerHTML = `<p>Błąd podczas ładowania artykułów: ${err.message}</p>`;
+        container.innerHTML = `<p>Błąd podczas ładowania artykułów: ${err}</p>`;
       });
     }
 
-    // Start
     fetchUranPosts();
   </script>
 </body>
