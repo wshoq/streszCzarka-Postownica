@@ -2,76 +2,101 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Artykuły o Wodorze</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 2rem;
+      max-width: 700px;
+      margin: auto;
+      padding: 2rem;
+      background: #f7f7f7;
+    }
+    article {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
       color: #006494;
     }
-    .article {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .article h2 {
+    h2 {
       margin-top: 0;
       color: #003554;
     }
-    .article p {
-      line-height: 1.6;
+    a {
+      text-decoration: none;
+    }
+    .back-button {
+      display: inline-block;
+      margin-bottom: 2rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.2rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
   <h1>Artykuły o Wodorze</h1>
-  <div id="articles"></div>
+
+  <a href="index.html"><button class="back-button">← Powrót do artykułów</button></a>
+
+  <div id="posts">Ładowanie...</div>
 
   <script>
     const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function loadArticles() {
-      const { data, error } = await supabase
-        .from("Wodor")
-        .select("*")
-        .order("created_at", { ascending: false });
+    const container = document.getElementById('posts');
 
-      const container = document.getElementById("articles");
+    function linkify(text) {
+      const urlRegex = /https?:\/\/[^\s]+/g;
+      return text.replace(urlRegex, match => `<a href="${match}" target="_blank" rel="noopener noreferrer">link</a>`);
+    }
 
-      if (error) {
-        container.innerHTML = `<p style="color:red;">Błąd pobierania danych: ${error.message}</p>`;
-        return;
-      }
+    function fetchWodorPosts() {
+      fetch(`${SUPABASE_URL}/rest/v1/posts_wodor?select=title,content&order=created_at.desc&limit=100`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.ok ? res.json() : Promise.reject(`Błąd sieci: ${res.status}`))
+      .then(posts => {
+        if (posts.length === 0) {
+          container.innerHTML = `<p>Brak artykułów o Wodorze.</p>`;
+          return;
+        }
 
-      if (!data || data.length === 0) {
-        container.innerHTML = "<p>Brak artykułów do wyświetlenia.</p>";
-        return;
-      }
-
-      data.forEach(article => {
-        const articleEl = document.createElement("div");
-        articleEl.className = "article";
-        articleEl.innerHTML = `
-          <h2>${article.title || "Bez tytułu"}</h2>
-          <p>${(article.content || "").replace(/\n/g, "<br>")}</p>
-        `;
-        container.appendChild(articleEl);
+        container.innerHTML = '';
+        posts.forEach(post => {
+          container.innerHTML += `
+            <article>
+              <h2>${post.title}</h2>
+              <p>${linkify(post.content)}</p>
+            </article>
+          `;
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        container.innerHTML = `<p>Błąd podczas ładowania artykułów: ${err}</p>`;
       });
     }
 
-    loadArticles();
+    fetchWodorPosts();
   </script>
-
 </body>
 </html>
