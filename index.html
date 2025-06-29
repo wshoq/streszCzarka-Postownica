@@ -2,49 +2,203 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>🔬 Uran & Wodór News</title>
+  <title>Waść Wasza Cyfrowa</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       max-width: 700px;
       margin: auto;
       padding: 2rem;
-      background: #f0f0f0;
+      background: #f7f7f7;
       text-align: center;
     }
     h1 {
       margin-bottom: 2rem;
     }
-    .nav-buttons {
+    .links {
       display: flex;
       justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
+      gap: 3rem;
+      margin-bottom: 2rem;
     }
-    .nav-button {
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
+    .link-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-decoration: none;
+      color: #fff;
+      background-color: #dc3545;
+      padding: 1.5rem 2rem;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      width: 160px;
       transition: background-color 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      user-select: none;
     }
-    .nav-button:hover {
-      background-color: #0056b3;
+    .link-button:hover {
+      background-color: #b02a37;
+    }
+    .link-button span.icon {
+      font-size: 3.5rem;
+      margin-bottom: 0.5rem;
+      user-select: none;
+    }
+    .date-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .date-controls button {
+      font-size: 1.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #6c757d;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+    }
+    .date-controls button:hover {
+      background-color: #5a6268;
+    }
+    input[type="date"] {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      width: 180px;
+    }
+    #posts {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      min-height: 200px;
+      text-align: left;
+    }
+    article {
+      margin-bottom: 1.5rem;
+    }
+    article h2 {
+      margin-top: 0;
+      color: #333;
     }
   </style>
 </head>
 <body>
+  <h1>Waść Wasza Cyfrowa</h1>
 
-  <h1>📰 Artykuły Energetyczne</h1>
-
-  <div class="nav-buttons">
-    <a class="nav-button" href="uran.html">☢️ Uran</a>
-    <a class="nav-button" href="wodor.html">⚡ Wodór</a>
+  <div class="links">
+    <a href="uran.html" class="link-button" aria-label="Przejdź do Uran">
+      <span class="icon">☢️</span>
+      Uran
+    </a>
+    <a href="wodor.html" class="link-button" aria-label="Przejdź do Wodór">
+      <span class="icon">💧</span>
+      Wodór
+    </a>
   </div>
 
+  <div class="date-controls">
+    <button id="prevDayBtn">←</button>
+    <input type="date" id="datePicker" />
+    <button id="nextDayBtn">→</button>
+  </div>
+
+  <div id="posts">Wybierz datę, aby zobaczyć artykuły.</div>
+
+  <script>
+    const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
+
+    const datePicker = document.getElementById('datePicker');
+    const container = document.getElementById('posts');
+    const prevDayBtn = document.getElementById('prevDayBtn');
+    const nextDayBtn = document.getElementById('nextDayBtn');
+
+    function parseTitleDateToISO(titleDate) {
+      const [datePart] = titleDate.split(',');
+      const [day, month, year] = datePart.trim().split('.');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    function fetchPosts() {
+      container.innerHTML = "Ładowanie...";
+
+      fetch(`${SUPABASE_URL}/rest/v1/posts?select=title,content&order=title.desc&limit=100`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.ok ? res.json() : Promise.reject(`Błąd sieci: ${res.status}`))
+      .then(posts => {
+        const selectedDate = datePicker.value;
+        if (!selectedDate) {
+          container.innerHTML = '<p>Wybierz datę, aby zobaczyć artykuły.</p>';
+          return;
+        }
+
+        const filteredPosts = posts.filter(post => {
+          if (!post.title) return false;
+          const postDateISO = parseTitleDateToISO(post.title);
+          return postDateISO === selectedDate;
+        });
+
+        if (filteredPosts.length === 0) {
+          container.innerHTML = `<p>Brak artykułów na dzień ${selectedDate}.</p>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        filteredPosts.forEach(post => {
+          const contentHTML = post.content;
+          const sections = contentHTML.split(/<p>####\s(.+?)<\/p>/g);
+
+          let finalHTML = `<article><h2>${post.title}</h2>`;
+
+          for (let i = 1; i < sections.length; i += 2) {
+            const header = sections[i];
+            const body = sections[i + 1];
+
+            finalHTML += `
+              <div class="fragment">
+                <h3>${header}</h3>
+                <div>${body}</div>
+              </div>
+              <hr />
+            `;
+          }
+
+          finalHTML += `</article>`;
+          container.innerHTML += finalHTML;
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        container.innerHTML = `<p>Błąd podczas ładowania postów: ${err}</p>`;
+      });
+    }
+
+    function shiftDate(days) {
+      const current = new Date(datePicker.value);
+      current.setDate(current.getDate() + days);
+      const iso = current.toISOString().split('T')[0];
+      datePicker.value = iso;
+      fetchPosts();
+    }
+
+    prevDayBtn.addEventListener('click', () => shiftDate(-1));
+    nextDayBtn.addEventListener('click', () => shiftDate(1));
+    datePicker.addEventListener('change', fetchPosts);
+
+    // ustaw datę dzisiejszą na starcie i ładuj posty
+    const today = new Date().toISOString().slice(0, 10);
+    datePicker.value = today;
+    fetchPosts();
+  </script>
 </body>
 </html>
