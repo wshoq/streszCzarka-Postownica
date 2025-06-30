@@ -2,54 +2,55 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Artykuły o Wodorze</title>
+  <title>🔬 Artykuły o Wodorze</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: auto;
-      padding: 2rem;
-      background: #f7f7f7;
-    }
-    article {
-      background: white;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      background-color: #f4f4f4;
+      margin: 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
     h1 {
       text-align: center;
-      color: #006494;
+      color: #0077b6;
+    }
+    article {
+      background: #fff;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
     h2 {
       margin-top: 0;
-      color: #003554;
+      color: #023e8a;
     }
-    a {
+    .back {
+      display: block;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .back a {
+      background: #0077b6;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
       text-decoration: none;
     }
-    .back-button {
-      display: inline-block;
-      margin-bottom: 2rem;
-      padding: 0.75rem 1.5rem;
-      font-size: 1.2rem;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .back-button:hover {
-      background-color: #0056b3;
+    .back a:hover {
+      background: #023e8a;
     }
   </style>
 </head>
 <body>
-  <h1>Artykuły o Wodorze</h1>
 
-  <a href="index.html"><button class="back-button">← Powrót do artykułów</button></a>
+  <h1>🔬 Artykuły o Wodorze</h1>
+
+  <div class="back">
+    <a href="index.html">← Powrót</a>
+  </div>
 
   <div id="posts">Ładowanie...</div>
 
@@ -59,13 +60,8 @@
 
     const container = document.getElementById('posts');
 
-    function linkify(text) {
-      const urlRegex = /https?:\/\/[^\s]+/g;
-      return text.replace(urlRegex, match => `<a href="${match}" target="_blank" rel="noopener noreferrer">link</a>`);
-    }
-
     function fetchWodorPosts() {
-      fetch(`${SUPABASE_URL}/rest/v1/wodor?select=title,content&order=created_at.desc&limit=100`, {
+      fetch(`${SUPABASE_URL}/rest/v1/wodor?select=title,content&limit=100`, {
         headers: {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
@@ -73,10 +69,13 @@
           'Accept': 'application/json'
         }
       })
-      .then(res => res.ok ? res.json() : Promise.reject(`Błąd sieci: ${res.status}`))
+      .then(res => {
+        if (!res.ok) throw new Error(`Błąd sieci: ${res.status}`);
+        return res.json();
+      })
       .then(posts => {
-        if (posts.length === 0) {
-          container.innerHTML = `<p>Brak artykułów o Wodorze.</p>`;
+        if (!posts || posts.length === 0) {
+          container.innerHTML = "<p>Brak artykułów o Wodorze.</p>";
           return;
         }
 
@@ -84,15 +83,15 @@
         posts.forEach(post => {
           container.innerHTML += `
             <article>
-              <h2>${post.title}</h2>
-              <p>${linkify(post.content)}</p>
+              <h2>${post.title || "Bez tytułu"}</h2>
+              <p>${(post.content || "").replace(/\n/g, "<br>")}</p>
             </article>
           `;
         });
       })
       .catch(err => {
         console.error(err);
-        container.innerHTML = `<p>Błąd podczas ładowania artykułów: ${err}</p>`;
+        container.innerHTML = `<p style="color:red;">Błąd podczas ładowania artykułów: ${err.message}</p>`;
       });
     }
 
