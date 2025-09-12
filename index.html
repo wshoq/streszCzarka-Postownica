@@ -1,3 +1,5 @@
+index.html postownica
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -10,26 +12,46 @@
       margin: auto;
       padding: 2rem;
       background: #f7f7f7;
-    }
-    article {
-      background: white;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    h1 {
       text-align: center;
     }
-    h2 {
-      margin-top: 0;
+    h1 {
+      margin-bottom: 2rem;
+    }
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin-bottom: 2rem;
+    }
+    .link-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #fff;
+      background-color: #dc3545;
+      padding: 1.5rem 2rem;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      width: 160px;
+      transition: background-color 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      user-select: none;
+    }
+    .link-button:hover {
+      background-color: #b02a37;
+    }
+    .link-button span.icon {
+      font-size: 3.5rem;
+      margin-bottom: 0.5rem;
+      user-select: none;
     }
     .date-controls {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 1rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
     .date-controls button {
       font-size: 1.5rem;
@@ -39,6 +61,7 @@
       background-color: #6c757d;
       color: white;
       cursor: pointer;
+      user-select: none;
     }
     .date-controls button:hover {
       background-color: #5a6268;
@@ -48,32 +71,36 @@
       padding: 0.5rem;
       width: 180px;
     }
-    .button-group {
-      text-align: center;
+    #posts {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      min-height: 200px;
+      text-align: left;
+    }
+    article {
       margin-bottom: 1.5rem;
     }
-    .big-button {
-      font-size: 1.2rem;
-      padding: 0.75rem 1.5rem;
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .big-button:hover {
-      background-color: #b02a37;
-    }
-    .status {
-      margin-top: 10px;
-      font-weight: bold;
-      color: green;
+    article h2 {
+      margin-top: 0;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>📰 Krypto Treści</h1>
+  <h1>Waść Wasza Cyfrowa</h1>
+
+  <div class="links">
+    <a href="uran.html" class="link-button" aria-label="Przejdź do Uran">
+      <span class="icon">☢️</span>
+      Uran
+    </a>
+    <a href="wodor.html" class="link-button" aria-label="Przejdź do Wodór">
+      <span class="icon">💧</span>
+      Wodór
+    </a>
+  </div>
 
   <div class="date-controls">
     <button id="prevDayBtn">←</button>
@@ -81,18 +108,11 @@
     <button id="nextDayBtn">→</button>
   </div>
 
-  <div class="button-group">
-    <a href="uran.html">
-      <button class="big-button">☢️ Pokaż Uran</button>
-    </a>
-  </div>
-
   <div id="posts">Wybierz datę, aby zobaczyć artykuły.</div>
 
   <script>
     const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
-    // 🔑 Używamy nowego publishable API key
-    const SUPABASE_KEY = "sb_publishable_7FFOj0IzQ7ZkhYZkBNmeTw_rAQ3MGIP";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
     const datePicker = document.getElementById('datePicker');
     const container = document.getElementById('posts');
@@ -146,29 +166,10 @@
             const header = sections[i];
             const body = sections[i + 1];
 
-            const linkMatch = body.match(/\(https:\/\/(cointelegraph|coindesk)\.com[^\)]*\)/);
-            const link = linkMatch ? linkMatch[0].slice(1, -1) : "";
-
-            const formId = `form-${i}`;
-
             finalHTML += `
               <div class="fragment">
                 <h3>${header}</h3>
                 <div>${body}</div>
-                <div id="${formId}">
-                  <label>Zaklasyfikuj temat:
-                    <select required name="kategoria">
-                      <option value="">--Wybierz--</option>
-                      <option value="Rynki">Rynki</option>
-                      <option value="Technologie">Technologie</option>
-                      <option value="Prawo">Prawo</option>
-                      <option value="Adopcje">Adopcje</option>
-                      <option value="Pozostałe">Pozostałe</option>
-                      <option value="Szum">Szum</option>
-                    </select>
-                    <button onclick="submitOcena(this, '${header.replace(/'/g, "\\'")}', '${link}', '${formId}')">Wyślij</button>
-                  </label>
-                </div>
               </div>
               <hr />
             `;
@@ -184,38 +185,6 @@
       });
     }
 
-    function submitOcena(button, header, link, containerId) {
-      const select = button.previousElementSibling;
-      const category = select.value;
-
-      if (!category) {
-        alert("Wybierz kategorię.");
-        return;
-      }
-
-      fetch('https://vps15151.awhost.cloud/webhook/oceniator', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({
-          nagłówek: header,
-          kategoria: category,
-          link: link
-        })
-      })
-      .then(res => {
-        if (res.ok) {
-          const div = document.getElementById(containerId);
-          div.innerHTML = `<span class="status">✅ Ocenione!</span>`;
-        } else {
-          alert('Coś poszło nie tak 😓');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        alert('Błąd połączenia z webhookiem.');
-      });
-    }
-
     function shiftDate(days) {
       const current = new Date(datePicker.value);
       current.setDate(current.getDate() + days);
@@ -228,6 +197,7 @@
     nextDayBtn.addEventListener('click', () => shiftDate(1));
     datePicker.addEventListener('change', fetchPosts);
 
+    // ustaw datę dzisiejszą na starcie i ładuj posty
     const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
     fetchPosts();
