@@ -121,19 +121,8 @@
               </tr>
             `;
           }
-          // waluty i obligacje = czysta liczba
-          else if (!isNaN(content)) {
-            let value = content;
-            if (title.includes("Bond") && !value.endsWith("%")) value += "%";
-            marketsBody.innerHTML += `
-              <tr>
-                <td><strong>${title}</strong></td>
-                <td>${value}</td>
-              </tr>
-            `;
-          }
-          // indeksy = cała reszta
-          else {
+          // indeksy
+          else if (content.includes("zmiana")) {
             const match = content.match(/cena\s*([\d.,]+).*?procentowa\s*([-\d.,]+%)/i);
             if (match) {
               const price = match[1];
@@ -146,6 +135,17 @@
                 </tr>
               `;
             }
+          }
+          // waluty i obligacje = czysta liczba
+          else if (!isNaN(content)) {
+            let value = content;
+            if (title.includes("Bond") && !value.endsWith("%")) value += "%";
+            marketsBody.innerHTML += `
+              <tr>
+                <td><strong>${title}</strong></td>
+                <td>${value}</td>
+              </tr>
+            `;
           }
         });
       } catch (err) {
