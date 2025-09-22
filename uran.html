@@ -172,4 +172,26 @@
           // Waluty / Obligacje
           const valCandidate = content.replace(/\s/g,'').replace(',', '.');
           if (valCandidate !== "" && !isNaN(Number(valCandidate))) {
-            let value =
+            let value = content;
+            if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
+            marketsBody.insertAdjacentHTML('beforeend', `
+              <tr>
+                <td><strong>${title}</strong></td>
+                <td class="small">${value}</td>
+              </tr>
+            `);
+            return;
+          }
+        });
+
+      } catch (err) {
+        console.error(err);
+        document.body.insertAdjacentHTML('beforeend', `<p style="color:red">Błąd: ${err.message}</p>`);
+      }
+    }
+
+    fetchDashboard();
+    setInterval(fetchDashboard, 60000);
+  </script>
+</body>
+</html>
