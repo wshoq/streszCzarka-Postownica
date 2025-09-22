@@ -72,10 +72,15 @@ const indicesTable = document.getElementById('indices-table');
 const marketsTable = document.getElementById('markets-table');
 const commoditiesTable = document.getElementById('commodities-table');
 
+function getColorClass(val){
+  if(!val || val==='—') return '';
+  return parseFloat(val) > 0 ? 'positive' : parseFloat(val) < 0 ? 'negative' : '';
+}
+
 // -------------------- PANEL WALUT / BTC / BOND --------------------
 async function fetchMarketsPanel() {
   try {
-    const res = await fetch('https://markety-qiy7.onrender.com/api/markets');
+    const res = await fetch('https://markety-qiy7.onrender.com/api/markets-fast');
     const data = await res.json();
     marketsTable.innerHTML = '';
     for (const [name, info] of Object.entries(data)) {
@@ -102,17 +107,17 @@ async function fetchIndicesPanel() {
 
     indicesTable.innerHTML = '';
     items.forEach(item => {
-      if (item.content.includes('pkt')) { // indeksy
+      if(item.content.includes('pkt')) { // indeksy
         const priceMatch = item.content.match(/:\s*([\d.,]+)\s*pkt/);
         const changeMatch = item.content.match(/\(([-\d.,]+)%\)/);
         const price = priceMatch ? priceMatch[1] : '—';
         const change = changeMatch ? changeMatch[1] : '—';
-        const changeClass = parseFloat(change) > 0 ? 'positive' : (parseFloat(change) < 0 ? 'negative' : '');
-        indicesTable.innerHTML += `<tr><td>${item.title}</td><td>${price}</td><td class="${changeClass}">${change !== '—' ? change+'%' : '—'}</td></tr>`;
+        const changeClass = getColorClass(change);
+        indicesTable.innerHTML += `<tr><td>${item.title}</td><td>${price}</td><td class="${changeClass}">${change !== '—'? change+'%' : '—'}</td></tr>`;
       }
     });
 
-  } catch (err) {
+  } catch(err){
     console.error(err);
     indicesTable.innerHTML = '<tr><td colspan="3">Błąd ładowania indeksów.</td></tr>';
   }
@@ -132,16 +137,16 @@ async function fetchCommodities() {
     const items = await res.json();
 
     commoditiesTable.innerHTML = '';
-    items.forEach(item => {
-      if (item.content.includes('Price:')) { // surowce
-        const price = (item.content.match(/Price:\s*([\d.]+)/) || [])[1] || '—';
-        const daily = (item.content.match(/Daily:\s*([\d.-]+)/) || [])[1] || '—';
-        const dailyPct = (item.content.match(/Change:\s*([\d.-]+)%/) || [])[1] || '—';
-        const weekly = (item.content.match(/Weekly:\s*([\d.-]+)%/) || [])[1] || '—';
-        const monthly = (item.content.match(/Monthly:\s*([\d.-]+)%/) || [])[1] || '—';
-        const ytd = (item.content.match(/YTD:\s*([\d.-]+)%/) || [])[1] || '—';
-        const yoy = (item.content.match(/YoY:\s*([\d.-]+)%/) || [])[1] || '—';
-        const dateRaw = (item.content.match(/Date:\s*([\w\/]+)/) || [])[1] || '';
+    items.forEach(item=>{
+      if(item.content.includes('Price:')){ // surowce
+        const price = (item.content.match(/Price:\s*([\d.]+)/)||[])[1]||'—';
+        const daily = (item.content.match(/Daily:\s*([\d.-]+)/)||[])[1]||'—';
+        const dailyPct = (item.content.match(/Change:\s*([\d.-]+)%/)||[])[1]||'—';
+        const weekly = (item.content.match(/Weekly:\s*([\d.-]+)%/)||[])[1]||'—';
+        const monthly = (item.content.match(/Monthly:\s*([\d.-]+)%/)||[])[1]||'—';
+        const ytd = (item.content.match(/YTD:\s*([\d.-]+)%/)||[])[1]||'—';
+        const yoy = (item.content.match(/YoY:\s*([\d.-]+)%/)||[])[1]||'—';
+        const dateRaw = (item.content.match(/Date:\s*([\w\/]+)/)||[])[1]||'';
         let dateNum = '—';
         if(dateRaw){
           const [monthStr, yearStr] = dateRaw.split('/');
@@ -150,23 +155,23 @@ async function fetchCommodities() {
             dateNum = `${2000+parseInt(yearStr)}-${String(months[monthStr]).padStart(2,'0')}-01`;
           }
         }
-        const dailyClass = parseFloat(dailyPct) > 0 ? 'positive' : (parseFloat(dailyPct) < 0 ? 'negative' : '');
         commoditiesTable.innerHTML += `
           <tr>
             <td>${item.title}</td>
             <td>${price}</td>
             <td>${daily}</td>
-            <td class="${dailyClass}">${dailyPct}%</td>
-            <td>${weekly}%</td>
-            <td>${monthly}%</td>
-            <td>${ytd}%</td>
-            <td>${yoy}%</td>
+            <td class="${getColorClass(dailyPct)}">${dailyPct}%</td>
+            <td class="${getColorClass(weekly)}">${weekly}%</td>
+            <td class="${getColorClass(monthly)}">${monthly}%</td>
+            <td class="${getColorClass(ytd)}">${ytd}%</td>
+            <td class="${getColorClass(yoy)}">${yoy}%</td>
             <td>${dateNum}</td>
           </tr>
         `;
       }
     });
-  } catch (err) {
+
+  } catch(err){
     console.error(err);
     commoditiesTable.innerHTML = '<tr><td colspan="9">Błąd ładowania danych.</td></tr>';
   }
@@ -176,6 +181,12 @@ async function fetchCommodities() {
 fetchMarketsPanel();
 fetchIndicesPanel();
 fetchCommodities();
+
+// Opcjonalnie: odśwież co 30s
+setInterval(fetchMarketsPanel, 30000);
+setInterval(fetchIndicesPanel, 30000);
+setInterval(fetchCommodities, 30000);
+
 </script>
 </body>
 </html>
