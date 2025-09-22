@@ -11,6 +11,8 @@ h1, h2 { text-align: center; }
 table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
 th, td { padding: 0.5rem; border-bottom: 1px solid #ddd; text-align: left; }
 th { background-color: #007bff; color: white; }
+.positive { color: green; font-weight: bold; }
+.negative { color: red; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -73,7 +75,7 @@ const commoditiesTable = document.getElementById('commodities-table');
 // -------------------- PANEL WALUT / BTC / BOND --------------------
 async function fetchMarketsPanel() {
   try {
-    const res = await fetch('/api/markets'); // fetch z backendu, brak CORS problem
+    const res = await fetch('https://markety-qiy7.onrender.com/api/markets');
     const data = await res.json();
     marketsTable.innerHTML = '';
     for (const [name, info] of Object.entries(data)) {
@@ -100,12 +102,13 @@ async function fetchIndicesPanel() {
 
     indicesTable.innerHTML = '';
     items.forEach(item => {
-      if (item.content.includes('pkt')) { // indeksy mają format: Nazwa: 45493.66 pkt, zmiana 447.85 (0.99%)
+      if (item.content.includes('pkt')) { // indeksy
         const priceMatch = item.content.match(/:\s*([\d.,]+)\s*pkt/);
         const changeMatch = item.content.match(/\(([-\d.,]+)%\)/);
         const price = priceMatch ? priceMatch[1] : '—';
-        const change = changeMatch ? changeMatch[1] + '%' : '—';
-        indicesTable.innerHTML += `<tr><td>${item.title}</td><td>${price}</td><td>${change}</td></tr>`;
+        const change = changeMatch ? changeMatch[1] : '—';
+        const changeClass = parseFloat(change) > 0 ? 'positive' : (parseFloat(change) < 0 ? 'negative' : '');
+        indicesTable.innerHTML += `<tr><td>${item.title}</td><td>${price}</td><td class="${changeClass}">${change !== '—' ? change+'%' : '—'}</td></tr>`;
       }
     });
 
@@ -141,20 +144,19 @@ async function fetchCommodities() {
         const dateRaw = (item.content.match(/Date:\s*([\w\/]+)/) || [])[1] || '';
         let dateNum = '—';
         if(dateRaw){
-          // próbujemy zamienić np. Sep/22 → 2022-09-XX
           const [monthStr, yearStr] = dateRaw.split('/');
           const months = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
           if(monthStr && yearStr && months[monthStr]){
             dateNum = `${2000+parseInt(yearStr)}-${String(months[monthStr]).padStart(2,'0')}-01`;
           }
         }
-
+        const dailyClass = parseFloat(dailyPct) > 0 ? 'positive' : (parseFloat(dailyPct) < 0 ? 'negative' : '');
         commoditiesTable.innerHTML += `
           <tr>
             <td>${item.title}</td>
             <td>${price}</td>
             <td>${daily}</td>
-            <td>${dailyPct}%</td>
+            <td class="${dailyClass}">${dailyPct}%</td>
             <td>${weekly}%</td>
             <td>${monthly}%</td>
             <td>${ytd}%</td>
