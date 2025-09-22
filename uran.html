@@ -8,12 +8,13 @@
     h1 { text-align:center; margin-bottom:1rem; }
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
     table { width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:2rem; }
-    th, td { padding:0.5rem 0.75rem; border-bottom:1px solid #ddd; text-align:left; }
+    th, td { padding:0.5rem 0.75rem; border-bottom:1px solid #ddd; text-align:left; vertical-align: middle; }
     th { background:#f0f0f0; }
     tr:last-child td { border-bottom:none; }
     .positive { color:green; font-weight:bold; }
     .negative { color:red; font-weight:bold; }
-    .unit { font-size:0.8em; color:#666; font-weight:normal; }
+    .unit { font-size:0.82em; color:#666; font-weight:normal; margin-left:6px; }
+    .small { font-size:0.9em; color:#555; }
   </style>
 </head>
 <body>
@@ -24,11 +25,12 @@
       <h2>📈 Indeksy</h2>
       <table id="indexes-table">
         <thead>
-          <tr><th>Nazwa</th><th>Cena</th><th>Zmiana (%)</th></tr>
+          <tr><th>Nazwa</th><th>Cena</th><th>Zmiana (nom.)</th><th>Zmiana (%)</th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+
     <div>
       <h2>💱 Waluty & Obligacje</h2>
       <table id="markets-table">
@@ -55,19 +57,42 @@
     const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
-    function parseDate(dateStr) {
-      const [mon, day] = dateStr.split("/");
-      const month = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"}[mon] || "01";
-      const year = new Date().getFullYear().toString().slice(-2);
-      return `${day.padStart(2,"0")}.${month}.${year}`;
+    // HELPERS
+    function numericFromString(s){
+      if (s == null) return NaN;
+      const cleaned = String(s).replace(/\s/g,'').replace(',', '.').replace('%','');
+      const n = parseFloat(cleaned);
+      return isNaN(n) ? NaN : n;
     }
-    function coloredSpan(value) {
-      if (!value) return "";
-      if (value.startsWith("-")) return `<span class="negative">${value}</span>`;
-      if (value !== "0" && value !== "0%" && value !== "0.00%") return `<span class="positive">${value}</span>`;
-      return value;
+    function colorClassForNumericString(s){
+      const n = numericFromString(s);
+      if (isNaN(n)) return '';
+      if (n > 0) return 'positive';
+      if (n < 0) return 'negative';
+      return '';
+    }
+    function renderColored(value){
+      if (value == null) return '—';
+      const cls = colorClassForNumericString(value);
+      const safe = value;
+      return cls ? `<span class="${cls}">${safe}</span>` : safe;
     }
 
+    function parseDate(dateStr) {
+      // input example: "Sep/22" means 22nd of September (day = second part, month = first)
+      // desired output dd.mm.rr where rr = last two digits of current year
+      if (!dateStr) return '—';
+      const parts = dateStr.split('/');
+      if (parts.length !== 2) return dateStr;
+      const [mon, day] = parts;
+      const monthMap = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
+      const month = monthMap[mon] || "01";
+      const dayStr = day.padStart(2,'0');
+      const yearShort = new Date().getFullYear().toString().slice(-2);
+      return `${dayStr}.${month}.${yearShort}`;
+    }
+
+    // MAIN
     async function fetchDashboard() {
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content`, {
@@ -76,85 +101,152 @@
         if (!res.ok) throw new Error("Błąd sieci: " + res.status);
         const rows = await res.json();
 
-        const commoditiesBody = document.querySelector("#commodities-table tbody");
-        const indexesBody = document.querySelector("#indexes-table tbody");
+        const idxBody = document.querySelector("#indexes-table tbody");
         const marketsBody = document.querySelector("#markets-table tbody");
+        const commBody = document.querySelector("#commodities-table tbody");
 
-        commoditiesBody.innerHTML = "";
-        indexesBody.innerHTML = "";
+        idxBody.innerHTML = "";
         marketsBody.innerHTML = "";
+        commBody.innerHTML = "";
 
         rows.forEach(row => {
-          const { title, content } = row;
+          const title = row.title;
+          const content = (row.content || "").trim();
 
-          // surowce
+          // 1) Surowce: mają "Price:" w content
           if (content.includes("Price:")) {
-            const [rawName, rest] = content.split("→");
-            const parts = Object.fromEntries(rest.split("|").map(x => x.trim().split(/:\s*/)));
+            // split name → rest
+            // example content: "Copper (USD/Lbs) → Price: 4.5902 | Daily: 0.0173 | Change: 0.38% | Weekly: -1.38% | Monthly: 2.77% | YTD: 15.33% | YoY: 7.12% | Date: Sep/22"
+            const arrowSplit = content.split("→");
+            let rawName = title;
+            let rest = content;
+            if (arrowSplit.length >= 2) {
+              rawName = arrowSplit[0].trim();
+              rest = arrowSplit.slice(1).join("→").trim();
+            } else {
+              // fallback: try to use title and content
+              rest = content;
+            }
 
-            const price = parts["Price"];
-            const daily = parts["Daily"];
-            const change = parts["Change"];
-            const weekly = parts["Weekly"];
-            const monthly = parts["Monthly"];
-            const ytd = parts["YTD"];
-            const yoy = parts["YoY"];
-            const date = parseDate(parts["Date"]);
+            // parts map: key -> value, split by '|'
+            const parts = {};
+            rest.split("|").map(x => x.trim()).forEach(pair => {
+              const ix = pair.indexOf(':');
+              if (ix > -1) {
+                const k = pair.slice(0, ix).trim();
+                const v = pair.slice(ix+1).trim();
+                parts[k] = v;
+              }
+            });
 
-            const match = rawName.trim().match(/(.+?)\s*\((.+?)\)$/);
+            const price = parts["Price"] ?? '—';
+            const daily = parts["Daily"] ?? '—';
+            const change = parts["Change"] ?? '—';
+            const weekly = parts["Weekly"] ?? '—';
+            const monthly = parts["Monthly"] ?? '—';
+            const ytd = parts["YTD"] ?? '—';
+            const yoy = parts["YoY"] ?? '—';
+            const dateRaw = parts["Date"] ?? '';
+            const date = dateRaw ? parseDate(dateRaw) : '—';
+
+            // extract unit from rawName if present, otherwise show title
+            const match = rawName.match(/(.+?)\s*\((.+?)\)$/);
             let displayName = `<strong>${title}</strong>`;
             if (match) {
-              displayName = `<strong>${match[1]}</strong> <span class="unit">(${match[2]})</span>`;
+              const nameOnly = match[1].trim();
+              const unit = match[2].trim();
+              displayName = `<strong>${nameOnly}</strong> <span class="unit">(${unit})</span>`;
             }
 
-            commoditiesBody.innerHTML += `
+            commBody.insertAdjacentHTML('beforeend', `
               <tr>
                 <td>${displayName}</td>
-                <td>${price}</td>
-                <td>${daily}</td>
-                <td>${coloredSpan(change)}</td>
-                <td>${coloredSpan(weekly)}</td>
-                <td>${coloredSpan(monthly)}</td>
-                <td>${coloredSpan(ytd)}</td>
-                <td>${coloredSpan(yoy)}</td>
-                <td>${date}</td>
+                <td class="small">${price}</td>
+                <td class="small">${daily}</td>
+                <td class="small">${renderColored(change)}</td>
+                <td class="small">${renderColored(weekly)}</td>
+                <td class="small">${renderColored(monthly)}</td>
+                <td class="small">${renderColored(ytd)}</td>
+                <td class="small">${renderColored(yoy)}</td>
+                <td class="small">${date}</td>
               </tr>
-            `;
+            `);
+            return;
           }
-          // indeksy
-          else if (content.includes("zmiana")) {
-            const match = content.match(/cena\s*([\d.,]+).*?procentowa\s*([-\d.,]+%)/i);
-            if (match) {
-              const price = match[1];
-              const change = match[2];
-              indexesBody.innerHTML += `
-                <tr>
-                  <td><strong>${title}</strong></td>
-                  <td>${price}</td>
-                  <td>${coloredSpan(change)}</td>
-                </tr>
-              `;
-            }
-          }
-          // waluty i obligacje = czysta liczba
-          else if (!isNaN(content)) {
-            let value = content;
-            if (title.includes("Bond") && !value.endsWith("%")) value += "%";
-            marketsBody.innerHTML += `
+
+          // 2) Indeksy: rozpoznajemy po frazach "cena" i "zmiana procentowa" albo "zmiana procentowa"
+          // przykładowy content: "S&P 500, cena 46 381,54, zmiana nominalna +66,27, zmiana procentowa 0,14%"
+          // regex uwzględniający spacje w liczbach
+          const idxRegex = /cena\s*([0-9\s.,]+).*?zmiana nominalna\s*([+\-0-9\s.,]+|null).*?zmiana procentowa\s*([+\-0-9\s.,]+%)/i;
+          const m = content.match(idxRegex);
+          if (m) {
+            const priceRaw = m[1].trim();
+            const nominalRaw = (m[2] || '').trim();
+            const percentRaw = (m[3] || '').trim();
+
+            const nominalDisplay = (nominalRaw && nominalRaw.toLowerCase() !== 'null') ? nominalRaw.replace(/\+/,'') : '—';
+            // display price as captured (keep thousand spaces & comma)
+            idxBody.insertAdjacentHTML('beforeend', `
               <tr>
                 <td><strong>${title}</strong></td>
-                <td>${value}</td>
+                <td class="small">${priceRaw}</td>
+                <td class="small">${renderColored(nominalDisplay)}</td>
+                <td class="small">${renderColored(percentRaw)}</td>
               </tr>
-            `;
+            `);
+            return;
           }
+
+          // 3) Waluty / obligacje: czysta liczba (lub ewentualnie liczba z przecinkiem/dotą)
+          // treat values that parse to number as markets
+          const valCandidate = content.replace(/\s/g,'').replace(',', '.');
+          if (valCandidate !== "" && !isNaN(Number(valCandidate))) {
+            let value = content;
+            if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
+            marketsBody.insertAdjacentHTML('beforeend', `
+              <tr>
+                <td><strong>${title}</strong></td>
+                <td class="small">${value}</td>
+              </tr>
+            `);
+            return;
+          }
+
+          // fallback: if not matched above, try a looser index parse for percent: grab last "(\d+,\d+%)"
+          const looseIdx = content.match(/([0-9\s.,]+).*\(([-+]?[0-9\s.,]+%)\)/);
+          if (looseIdx) {
+            const priceRaw = looseIdx[1].trim();
+            const percentRaw = looseIdx[2].trim();
+            idxBody.insertAdjacentHTML('beforeend', `
+              <tr>
+                <td><strong>${title}</strong></td>
+                <td class="small">${priceRaw}</td>
+                <td class="small">${renderColored(percentRaw)}</td>
+              </tr>
+            `);
+            return;
+          }
+
+          // if nothing matched, put it into markets as raw
+          marketsBody.insertAdjacentHTML('beforeend', `
+            <tr>
+              <td><strong>${title}</strong></td>
+              <td class="small">${content}</td>
+            </tr>
+          `);
         });
+
       } catch (err) {
         console.error(err);
-        document.body.innerHTML += `<p style="color:red">Błąd: ${err}</p>`;
+        document.body.insertAdjacentHTML('beforeend', `<p style="color:red">Błąd: ${err.message}</p>`);
       }
     }
 
+    // initial load
     fetchDashboard();
+
+    // optional: auto-refresh every 60s
+    setInterval(fetchDashboard, 60000);
   </script>
 </body>
 </html>
