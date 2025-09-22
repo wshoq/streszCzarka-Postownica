@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <title>☢️ Market Dashboard</title>
 <style>
-body { font-family: Arial; max-width: 900px; margin: auto; padding: 2rem; background: #f7f7f7; }
+body { font-family: Arial; max-width: 1200px; margin: auto; padding: 2rem; background: #f7f7f7; }
 h1, h2 { text-align: center; }
-.panel { display: flex; justify-content: space-around; margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.container { display: flex; justify-content: space-between; margin-bottom: 2rem; gap: 1rem; }
+.panel { flex: 1; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
 th, td { padding: 0.5rem; border-bottom: 1px solid #ddd; text-align: left; }
 th { background-color: #007bff; color: white; }
 </style>
@@ -15,11 +16,33 @@ th { background-color: #007bff; color: white; }
 <body>
 <h1>☢️ Market Dashboard</h1>
 
-<div class="panel" id="market-panel">
-  <div>Ładowanie danych rynkowych...</div>
+<div class="container">
+  <div class="panel" id="indices-panel">
+    <h2>Indeksy</h2>
+    <table>
+      <thead>
+        <tr><th>Nazwa</th><th>Cena</th><th>Zmiana %</th></tr>
+      </thead>
+      <tbody id="indices-table">
+        <tr><td colspan="3">Ładowanie...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel" id="markets-panel">
+    <h2>Waluty / BTC / 10Y Bond</h2>
+    <table>
+      <thead>
+        <tr><th>Nazwa</th><th>Cena</th></tr>
+      </thead>
+      <tbody id="markets-table">
+        <tr><td colspan="2">Ładowanie...</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<h2>Surowce i Indeksy</h2>
+<h2>Surowce</h2>
 <table>
   <thead>
     <tr>
@@ -34,7 +57,7 @@ th { background-color: #007bff; color: white; }
       <th>Date</th>
     </tr>
   </thead>
-  <tbody id="dashboard-table">
+  <tbody id="commodities-table">
     <tr><td colspan="9">Ładowanie danych...</td></tr>
   </tbody>
 </table>
@@ -43,30 +66,27 @@ th { background-color: #007bff; color: white; }
 const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
-const marketPanel = document.getElementById('market-panel');
-const dashboardTable = document.getElementById('dashboard-table');
+const indicesTable = document.getElementById('indices-table');
+const marketsTable = document.getElementById('markets-table');
+const commoditiesTable = document.getElementById('commodities-table');
 
-async function fetchMarketPanel() {
+// -------------------- PANEL WALUT / BTC / BOND --------------------
+async function fetchMarketsPanel() {
   try {
-    const res = await fetch('https://markety-qiy7.onrender.com/api/markets');
+    const res = await fetch('/api/markets'); // fetch z backendu, brak CORS problem
     const data = await res.json();
-
-    marketPanel.innerHTML = '';
+    marketsTable.innerHTML = '';
     for (const [name, info] of Object.entries(data)) {
-      marketPanel.innerHTML += `
-        <div>
-          <strong>${name}</strong><br/>
-          ${info.price !== null ? info.price : '—'}
-        </div>
-      `;
+      marketsTable.innerHTML += `<tr><td>${name}</td><td>${info.price !== null ? info.price : '—'}</td></tr>`;
     }
   } catch (err) {
     console.error(err);
-    marketPanel.innerHTML = '<div>Błąd podczas ładowania danych rynkowych.</div>';
+    marketsTable.innerHTML = '<tr><td colspan="2">Błąd ładowania danych.</td></tr>';
   }
 }
 
-async function fetchDashboard() {
+// -------------------- PANEL INDEKSÓW --------------------
+async function fetchIndicesPanel() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content&order=id.asc&limit=100`, {
       headers: {
@@ -78,56 +98,82 @@ async function fetchDashboard() {
     });
     const items = await res.json();
 
-    if (!items.length) {
-      dashboardTable.innerHTML = '<tr><td colspan="9">Brak danych.</td></tr>';
-      return;
-    }
-
-    dashboardTable.innerHTML = '';
+    indicesTable.innerHTML = '';
     items.forEach(item => {
-      let price='—', daily='—', dailyPct='—', weekly='—', monthly='—', ytd='—', yoy='—', date='—';
-
-      // Surowce: dopasowanie Price, Daily, Daily %, Weekly %, Monthly %, YTD %, YoY %, Date
-      const priceMatch = item.content.match(/Price:\s*([\d.]+)/);
-      const dailyMatch = item.content.match(/Daily:\s*([\d.-]+)/);
-      const dailyPctMatch = item.content.match(/Change:\s*([\d.-]+)%/);
-      const weeklyMatch = item.content.match(/Weekly:\s*([\d.-]+)%/);
-      const monthlyMatch = item.content.match(/Monthly:\s*([\d.-]+)%/);
-      const ytdMatch = item.content.match(/YTD:\s*([\d.-]+)%/);
-      const yoyMatch = item.content.match(/YoY:\s*([\d.-]+)%/);
-      const dateMatch = item.content.match(/Date:\s*([\w\/]+)/);
-
-      if (priceMatch) price = priceMatch[1];
-      if (dailyMatch) daily = dailyMatch[1];
-      if (dailyPctMatch) dailyPct = dailyPctMatch[1] + '%';
-      if (weeklyMatch) weekly = weeklyMatch[1] + '%';
-      if (monthlyMatch) monthly = monthlyMatch[1] + '%';
-      if (ytdMatch) ytd = ytdMatch[1] + '%';
-      if (yoyMatch) yoy = yoyMatch[1] + '%';
-      if (dateMatch) date = dateMatch[1];
-
-      dashboardTable.innerHTML += `
-        <tr>
-          <td>${item.title}</td>
-          <td>${price}</td>
-          <td>${daily}</td>
-          <td>${dailyPct}</td>
-          <td>${weekly}</td>
-          <td>${monthly}</td>
-          <td>${ytd}</td>
-          <td>${yoy}</td>
-          <td>${date}</td>
-        </tr>
-      `;
+      if (item.content.includes('pkt')) { // indeksy mają format: Nazwa: 45493.66 pkt, zmiana 447.85 (0.99%)
+        const priceMatch = item.content.match(/:\s*([\d.,]+)\s*pkt/);
+        const changeMatch = item.content.match(/\(([-\d.,]+)%\)/);
+        const price = priceMatch ? priceMatch[1] : '—';
+        const change = changeMatch ? changeMatch[1] + '%' : '—';
+        indicesTable.innerHTML += `<tr><td>${item.title}</td><td>${price}</td><td>${change}</td></tr>`;
+      }
     });
+
   } catch (err) {
     console.error(err);
-    dashboardTable.innerHTML = '<tr><td colspan="9">Błąd podczas ładowania danych.</td></tr>';
+    indicesTable.innerHTML = '<tr><td colspan="3">Błąd ładowania indeksów.</td></tr>';
   }
 }
 
-fetchMarketPanel();
-fetchDashboard();
+// -------------------- TABELA SUROWCÓW --------------------
+async function fetchCommodities() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content&order=id.asc&limit=100`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    const items = await res.json();
+
+    commoditiesTable.innerHTML = '';
+    items.forEach(item => {
+      if (item.content.includes('Price:')) { // surowce
+        const price = (item.content.match(/Price:\s*([\d.]+)/) || [])[1] || '—';
+        const daily = (item.content.match(/Daily:\s*([\d.-]+)/) || [])[1] || '—';
+        const dailyPct = (item.content.match(/Change:\s*([\d.-]+)%/) || [])[1] || '—';
+        const weekly = (item.content.match(/Weekly:\s*([\d.-]+)%/) || [])[1] || '—';
+        const monthly = (item.content.match(/Monthly:\s*([\d.-]+)%/) || [])[1] || '—';
+        const ytd = (item.content.match(/YTD:\s*([\d.-]+)%/) || [])[1] || '—';
+        const yoy = (item.content.match(/YoY:\s*([\d.-]+)%/) || [])[1] || '—';
+        const dateRaw = (item.content.match(/Date:\s*([\w\/]+)/) || [])[1] || '';
+        let dateNum = '—';
+        if(dateRaw){
+          // próbujemy zamienić np. Sep/22 → 2022-09-XX
+          const [monthStr, yearStr] = dateRaw.split('/');
+          const months = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+          if(monthStr && yearStr && months[monthStr]){
+            dateNum = `${2000+parseInt(yearStr)}-${String(months[monthStr]).padStart(2,'0')}-01`;
+          }
+        }
+
+        commoditiesTable.innerHTML += `
+          <tr>
+            <td>${item.title}</td>
+            <td>${price}</td>
+            <td>${daily}</td>
+            <td>${dailyPct}%</td>
+            <td>${weekly}%</td>
+            <td>${monthly}%</td>
+            <td>${ytd}%</td>
+            <td>${yoy}%</td>
+            <td>${dateNum}</td>
+          </tr>
+        `;
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    commoditiesTable.innerHTML = '<tr><td colspan="9">Błąd ładowania danych.</td></tr>';
+  }
+}
+
+// -------------------- INIT --------------------
+fetchMarketsPanel();
+fetchIndicesPanel();
+fetchCommodities();
 </script>
 </body>
 </html>
