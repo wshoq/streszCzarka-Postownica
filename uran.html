@@ -48,6 +48,11 @@
       color: red;
       font-weight: bold;
     }
+    .unit {
+      font-size: 0.8em;
+      color: #666;
+      font-weight: normal;
+    }
   </style>
 </head>
 <body>
@@ -105,7 +110,7 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
     function parseDate(dateStr) {
-      // przykładowy input: "Sep/22"
+      // przykład: "Sep/22" -> "22.09.25"
       const [mon, day] = dateStr.split("/");
       const month = {
         Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",
@@ -146,11 +151,13 @@
         rows.forEach(row => {
           const { title, content } = row;
 
-          // surowce (mają "Price:" i "Date:")
+          // surowce
           if (content.includes("Price:") && content.includes("Date:")) {
+            const [rawName, rest] = content.split("→");
             const parts = Object.fromEntries(
-              content.split("|").map(x => x.trim().split(/:\s*/))
+              rest.split("|").map(x => x.trim().split(/:\s*/))
             );
+
             const price = parts["Price"];
             const daily = parts["Daily"];
             const change = parts["Change"];
@@ -160,9 +167,18 @@
             const yoy = parts["YoY"];
             const date = parseDate(parts["Date"]);
 
+            // wyciągnij jednostkę z nazwy
+            const match = rawName.trim().match(/(.+?)\s*\((.+?)\)$/);
+            let displayName = `<strong>${title}</strong>`;
+            if (match) {
+              const nameOnly = match[1];
+              const unit = match[2];
+              displayName = `<strong>${nameOnly}</strong> <span class="unit">(${unit})</span>`;
+            }
+
             commoditiesBody.innerHTML += `
               <tr>
-                <td>${title}</td>
+                <td>${displayName}</td>
                 <td>${price}</td>
                 <td>${daily}</td>
                 <td>${coloredSpan(change)}</td>
@@ -174,7 +190,7 @@
               </tr>
             `;
           }
-          // indeksy (mają "pkt, zmiana ... (%)")
+          // indeksy
           else if (content.includes("pkt, zmiana")) {
             const match = content.match(/: ([0-9.,]+) pkt, zmiana .*?\(([-0-9.,]+%)\)/);
             if (match) {
@@ -182,20 +198,20 @@
               const change = match[2];
               indexesBody.innerHTML += `
                 <tr>
-                  <td>${title}</td>
+                  <td><strong>${title}</strong></td>
                   <td>${price}</td>
                   <td>${coloredSpan(change)}</td>
                 </tr>
               `;
             }
           }
-          // waluty i obligacje (zwykła liczba)
+          // waluty i obligacje
           else {
             let value = content;
             if (title.includes("Bond")) value += "%";
             marketsBody.innerHTML += `
               <tr>
-                <td>${title}</td>
+                <td><strong>${title}</strong></td>
                 <td>${value}</td>
               </tr>
             `;
