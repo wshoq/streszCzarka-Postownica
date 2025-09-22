@@ -121,6 +121,7 @@
     }
 
     function coloredSpan(value) {
+      if (!value) return "";
       if (value.startsWith("-")) {
         return `<span class="negative">${value}</span>`;
       } else if (value !== "0" && value !== "0%" && value !== "0.00%") {
@@ -167,7 +168,6 @@
             const yoy = parts["YoY"];
             const date = parseDate(parts["Date"]);
 
-            // wyciągnij jednostkę z nazwy
             const match = rawName.trim().match(/(.+?)\s*\((.+?)\)$/);
             let displayName = `<strong>${title}</strong>`;
             if (match) {
@@ -191,8 +191,8 @@
             `;
           }
           // indeksy
-          else if (content.includes("pkt, zmiana")) {
-            const match = content.match(/: ([0-9.,]+) pkt, zmiana .*?\(([-0-9.,]+%)\)/);
+          else if (/pkt,\s*zmiana/.test(content)) {
+            const match = content.match(/:\s*([\d.,]+)\s*pkt,\s*zmiana.*\(([-\d.,]+%)\)/);
             if (match) {
               const price = match[1];
               const change = match[2];
@@ -208,7 +208,7 @@
           // waluty i obligacje
           else {
             let value = content;
-            if (title.includes("Bond")) value += "%";
+            if (title.includes("Bond") && !value.endsWith("%")) value += "%";
             marketsBody.innerHTML += `
               <tr>
                 <td><strong>${title}</strong></td>
