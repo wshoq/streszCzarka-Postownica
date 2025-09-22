@@ -4,55 +4,16 @@
   <meta charset="UTF-8" />
   <title>📊 Dashboard Markets</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: #f4f4f9;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 2rem;
-    }
-    th, td {
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #f0f0f0;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    .positive {
-      color: green;
-      font-weight: bold;
-    }
-    .negative {
-      color: red;
-      font-weight: bold;
-    }
-    .unit {
-      font-size: 0.8em;
-      color: #666;
-      font-weight: normal;
-    }
+    body { font-family: Arial, sans-serif; margin:0; padding:1rem; background:#f4f4f9; color:#333; }
+    h1 { text-align:center; margin-bottom:1rem; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    table { width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:2rem; }
+    th, td { padding:0.5rem 0.75rem; border-bottom:1px solid #ddd; text-align:left; }
+    th { background:#f0f0f0; }
+    tr:last-child td { border-bottom:none; }
+    .positive { color:green; font-weight:bold; }
+    .negative { color:red; font-weight:bold; }
+    .unit { font-size:0.8em; color:#666; font-weight:normal; }
   </style>
 </head>
 <body>
@@ -63,24 +24,16 @@
       <h2>📈 Indeksy</h2>
       <table id="indexes-table">
         <thead>
-          <tr>
-            <th>Nazwa</th>
-            <th>Cena</th>
-            <th>Zmiana (%)</th>
-          </tr>
+          <tr><th>Nazwa</th><th>Cena</th><th>Zmiana (%)</th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
-
     <div>
       <h2>💱 Waluty & Obligacje</h2>
       <table id="markets-table">
         <thead>
-          <tr>
-            <th>Nazwa</th>
-            <th>Wartość</th>
-          </tr>
+          <tr><th>Nazwa</th><th>Wartość</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -91,15 +44,8 @@
   <table id="commodities-table">
     <thead>
       <tr>
-        <th>Nazwa</th>
-        <th>Cena</th>
-        <th>Daily</th>
-        <th>Change (%)</th>
-        <th>Weekly</th>
-        <th>Monthly</th>
-        <th>YTD</th>
-        <th>YoY</th>
-        <th>Data</th>
+        <th>Nazwa</th><th>Cena</th><th>Daily</th><th>Change (%)</th>
+        <th>Weekly</th><th>Monthly</th><th>YTD</th><th>YoY</th><th>Data</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -110,33 +56,22 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
     function parseDate(dateStr) {
-      // przykład: "Sep/22" -> "22.09.25"
       const [mon, day] = dateStr.split("/");
-      const month = {
-        Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",
-        Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"
-      }[mon] || "01";
+      const month = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"}[mon] || "01";
       const year = new Date().getFullYear().toString().slice(-2);
       return `${day.padStart(2,"0")}.${month}.${year}`;
     }
-
     function coloredSpan(value) {
       if (!value) return "";
-      if (value.startsWith("-")) {
-        return `<span class="negative">${value}</span>`;
-      } else if (value !== "0" && value !== "0%" && value !== "0.00%") {
-        return `<span class="positive">${value}</span>`;
-      }
+      if (value.startsWith("-")) return `<span class="negative">${value}</span>`;
+      if (value !== "0" && value !== "0%" && value !== "0.00%") return `<span class="positive">${value}</span>`;
       return value;
     }
 
     async function fetchDashboard() {
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content`, {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`
-          }
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
         });
         if (!res.ok) throw new Error("Błąd sieci: " + res.status);
         const rows = await res.json();
@@ -153,11 +88,9 @@
           const { title, content } = row;
 
           // surowce
-          if (content.includes("Price:") && content.includes("Date:")) {
+          if (content.includes("Price:")) {
             const [rawName, rest] = content.split("→");
-            const parts = Object.fromEntries(
-              rest.split("|").map(x => x.trim().split(/:\s*/))
-            );
+            const parts = Object.fromEntries(rest.split("|").map(x => x.trim().split(/:\s*/)));
 
             const price = parts["Price"];
             const daily = parts["Daily"];
@@ -171,9 +104,7 @@
             const match = rawName.trim().match(/(.+?)\s*\((.+?)\)$/);
             let displayName = `<strong>${title}</strong>`;
             if (match) {
-              const nameOnly = match[1];
-              const unit = match[2];
-              displayName = `<strong>${nameOnly}</strong> <span class="unit">(${unit})</span>`;
+              displayName = `<strong>${match[1]}</strong> <span class="unit">(${match[2]})</span>`;
             }
 
             commoditiesBody.innerHTML += `
@@ -190,9 +121,20 @@
               </tr>
             `;
           }
-          // indeksy
-          else if (/pkt,\s*zmiana/.test(content)) {
-            const match = content.match(/:\s*([\d.,]+)\s*pkt,\s*zmiana.*\(([-\d.,]+%)\)/);
+          // waluty i obligacje = czysta liczba
+          else if (!isNaN(content)) {
+            let value = content;
+            if (title.includes("Bond") && !value.endsWith("%")) value += "%";
+            marketsBody.innerHTML += `
+              <tr>
+                <td><strong>${title}</strong></td>
+                <td>${value}</td>
+              </tr>
+            `;
+          }
+          // indeksy = cała reszta
+          else {
+            const match = content.match(/cena\s*([\d.,]+).*?procentowa\s*([-\d.,]+%)/i);
             if (match) {
               const price = match[1];
               const change = match[2];
@@ -204,17 +146,6 @@
                 </tr>
               `;
             }
-          }
-          // waluty i obligacje
-          else {
-            let value = content;
-            if (title.includes("Bond") && !value.endsWith("%")) value += "%";
-            marketsBody.innerHTML += `
-              <tr>
-                <td><strong>${title}</strong></td>
-                <td>${value}</td>
-              </tr>
-            `;
           }
         });
       } catch (err) {
