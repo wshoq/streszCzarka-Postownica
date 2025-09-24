@@ -155,6 +155,7 @@
               displayName = `<strong>${nameOnly}</strong> <span class="unit">(${unit})</span>`;
             }
 
+            // Daily kolorujemy wg znaku "Change"
             const forceSign = change.includes("-") ? "-" : change.includes("+") ? "+" : null;
 
             commBody.insertAdjacentHTML('beforeend', `
