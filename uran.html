@@ -15,6 +15,24 @@
     .negative { color:red; font-weight:bold; }
     .unit { font-size:0.82em; color:#666; font-weight:normal; margin-left:6px; }
     .small { font-size:0.9em; color:#555; }
+
+    /* Styl przycisku powrotu */
+    .back-btn {
+      display:inline-block;
+      margin-bottom:0.5rem;
+      padding:0.35rem 0.75rem;
+      font-size:0.85rem;
+      background:#e0e0e0;
+      color:#333;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      text-decoration:none;
+      transition:background 0.2s ease;
+    }
+    .back-btn:hover {
+      background:#ccc;
+    }
   </style>
 </head>
 <body>
@@ -22,6 +40,8 @@
 
   <div class="grid">
     <div>
+      <!-- przycisk powrotu -->
+      <a href="index.html" class="back-btn">← Powrót do indexu</a>
       <h2>📈 Indeksy</h2>
       <table id="indexes-table">
         <thead>
