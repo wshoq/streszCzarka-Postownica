@@ -18,33 +18,31 @@ tr:last-child td { border-bottom:none; }
 /* Styl przycisku powrotu */
 .back-btn { display:inline-block; margin-bottom:0.5rem; padding:0.35rem 0.75rem; font-size:0.85rem; background:#e0e0e0; color:#333; border:none; border-radius:6px; cursor:pointer; text-decoration:none; transition:background 0.2s ease; }
 .back-btn:hover { background:#ccc; }
-/* Styl przycisków walorów */
-.item-btn { background:none; border:none; color:#333; font-weight:bold; cursor:pointer; padding:0; font-family: inherit; }
-.item-btn:hover { text-decoration:underline; }
+a.item-link { text-decoration:none; color:inherit; }
+a.item-link:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
 <h1>📊 Dashboard Markets</h1>
 <div class="grid">
 <div>
-  <!-- przycisk powrotu -->
-  <a href="index.html" class="back-btn">← Powrót do streszCzarki</a>
-  <h2>📈 Indeksy</h2>
-  <table id="indexes-table">
-    <thead>
-      <tr><th>Nazwa</th><th>Cena</th><th>Zmiana (nom.)</th><th>Zmiana (%)</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<a href="index.html" class="back-btn">← Powrót do streszCzarki</a>
+<h2>📈 Indeksy</h2>
+<table id="indexes-table">
+<thead>
+<tr><th>Nazwa</th><th>Cena</th><th>Zmiana (nom.)</th><th>Zmiana (%)</th></tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
 <div>
-  <h2>💱 Waluty & Obligacje</h2>
-  <table id="markets-table">
-    <thead>
-      <tr><th>Nazwa</th><th>Wartość</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<h2>💱 Waluty & Obligacje</h2>
+<table id="markets-table">
+<thead>
+<tr><th>Nazwa</th><th>Wartość</th></tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
 </div>
 <h2>⚒️ Surowce</h2>
@@ -58,153 +56,189 @@ tr:last-child td { border-bottom:none; }
 <tbody></tbody>
 </table>
 <script>
+const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
+
 const flagMap = {
 "USD": "🇺🇸", "EUR": "🇪🇺", "PLN": "🇵🇱", "CHF": "🇨🇭", "GBP": "🇬🇧",
 "JPY": "🇯🇵", "BTC": "₿", "Nikkei": "🇯🇵", "Hang Seng": "🇭🇰",
 "DAX": "🇩🇪", "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸"
 };
 
-const linkMap = {
-"DAX":"https://tradingeconomics.com/germany/stock-market",
-"Nikkei":"https://tradingeconomics.com/japan/stock-market",
-"Hang Seng":"https://tradingeconomics.com/hong-kong/stock-market",
-"S&P":"https://tradingeconomics.com/spx:ind",
-"Nasdaq":"https://tradingeconomics.com/ndaq:us",
-"Dow Jones":"https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html",
-"USD/PLN":"https://tradingeconomics.com/usdpln:cur",
-"EUR/USD":"https://tradingeconomics.com/eurusd:cur",
-"CHF/PLN":"https://tradingeconomics.com/chfpln:cur",
-"BTC/USD":"https://www.coingecko.com/en/coins/bitcoin",
-"US 10Y Bond":"https://tradingeconomics.com/united-states/government-bond-yield",
-"Gold":"https://tradingeconomics.com/commodity/gold",
-"Silver":"https://tradingeconomics.com/commodity/silver",
-"Platinum":"https://tradingeconomics.com/commodity/platinum",
-"Copper":"https://tradingeconomics.com/commodity/copper",
-"Neodymium":"https://tradingeconomics.com/commodity/neodymium",
-"Uranium":"https://tradingeconomics.com/commodity/uranium"
-};
-
 function addFlag(title) {
-  for (const key in flagMap) {
-    if (title.includes(key)) return flagMap[key] + " " + title;
-  }
-  return title;
+for (const key in flagMap) {
+if (title.includes(key)) return flagMap[key] + " " + title;
+}
+return title;
 }
 
 function renderColored(value, forceSign = null){
-  if (!value || value === '—') return '—';
-  const cleaned = value.replace(/\s/g,'').replace(',','.').replace('%','');
-  let n = parseFloat(cleaned);
-  if (isNaN(n)) return value;
-  if (forceSign === "+") n = Math.abs(n);
-  if (forceSign === "-") n = -Math.abs(n);
-  if (n > 0) return `<span class="positive">${value}</span>`;
-  if (n < 0) return `<span class="negative">${value}</span>`;
-  return value;
+if (!value || value === '—') return '—';
+const cleaned = value.replace(/\s/g,'').replace(',','.').replace('%','');
+let n = parseFloat(cleaned);
+if (isNaN(n)) return value;
+if (forceSign === "+") n = Math.abs(n);
+if (forceSign === "-") n = -Math.abs(n);
+if (n > 0) return `<span class="positive">${value}</span>`;
+if (n < 0) return `<span class="negative">${value}</span>`;
+return value;
 }
 
 function parseDate(dateStr) {
-  if (!dateStr) return '—';
-  const parts = dateStr.split('/');
-  if (parts.length !== 2) return dateStr;
-  const [mon, day] = parts;
-  const monthMap = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
-  const month = monthMap[mon] || "01";
-  const dayStr = day.padStart(2,'0');
-  const yearShort = new Date().getFullYear().toString().slice(-2);
-  return `${dayStr}.${month}.${yearShort}`;
+if (!dateStr) return '—';
+const parts = dateStr.split('/');
+if (parts.length !== 2) return dateStr;
+const [mon, day] = parts;
+const monthMap = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
+const month = monthMap[mon] || "01";
+const dayStr = day.padStart(2,'0');
+const yearShort = new Date().getFullYear().toString().slice(-2);
+return `${dayStr}.${month}.${yearShort}`;
 }
 
-// Funkcja generująca przycisk z linkiem
-function makeLinkButton(title) {
-  const key = Object.keys(linkMap).find(k => title.includes(k));
-  const href = key ? linkMap[key] : "#";
-  return `<button class="item-btn" onclick="window.open('${href}','_blank')">${title}</button>`;
+// Mapowanie linków niezależne od Supabase
+const linkMap = {
+"DAX": "https://tradingeconomics.com/germany/stock-market",
+"Nikkei": "https://tradingeconomics.com/japan/stock-market",
+"Hang Seng": "https://tradingeconomics.com/hong-kong/stock-market",
+"S&P": "https://tradingeconomics.com/spx:ind",
+"Nasdaq": "https://tradingeconomics.com/ndaq:us",
+"Dow Jones": "https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html",
+"USD/PLN": "https://tradingeconomics.com/usdpln:cur",
+"EUR/USD": "https://tradingeconomics.com/eurusd:cur",
+"CHF/PLN": "https://tradingeconomics.com/chfpln:cur",
+"BTC/USD": "https://www.coingecko.com/en/coins/bitcoin",
+"US 10Y Bond": "https://tradingeconomics.com/united-states/government-bond-yield",
+"Gold": "https://tradingeconomics.com/commodity/gold",
+"Silver": "https://tradingeconomics.com/commodity/silver",
+"Platinum": "https://tradingeconomics.com/commodity/platinum",
+"Copper": "https://tradingeconomics.com/commodity/copper",
+"Neodymium": "https://tradingeconomics.com/commodity/neodymium",
+"Uranium": "https://tradingeconomics.com/commodity/uranium"
+};
+
+function getLinkForItem(title) {
+for (const key in linkMap) {
+if (title.toLowerCase().includes(key.toLowerCase())) return linkMap[key];
+}
+return "#";
 }
 
-// Przykładowe dane do demonstracji
-const demoRows = [
-  {title:"DAX", content:": 15350 pkt, zmiana +50 (+0,33%)"},
-  {title:"Nikkei", content:": 30500 pkt, zmiana -120 (-0,39%)"},
-  {title:"USD/PLN", content:"4.34"},
-  {title:"Gold", content:"Price: 1920 | Daily: +15 | Change: +0.79% | Weekly: +0.5 | Monthly: +1.2 | YTD: +3.2 | YoY: +7.8 | Date: Sep/25"}
-];
+async function fetchDashboard() {
+try {
+const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content`, {
+headers: {
+apikey: SUPABASE_KEY,
+Authorization: `Bearer ${SUPABASE_KEY}`
+}
+});
+if (!res.ok) throw new Error("Błąd sieci: " + res.status);
+const rows = await res.json();
 
-function fetchDashboard() {
-  try {
-    const idxBody = document.querySelector("#indexes-table tbody");
-    const marketsBody = document.querySelector("#markets-table tbody");
-    const commBody = document.querySelector("#commodities-table tbody");
-    idxBody.innerHTML = ""; marketsBody.innerHTML = ""; commBody.innerHTML = "";
+const idxBody = document.querySelector("#indexes-table tbody");
+const marketsBody = document.querySelector("#markets-table tbody");
+const commBody = document.querySelector("#commodities-table tbody");
+idxBody.innerHTML = "";
+marketsBody.innerHTML = "";
+commBody.innerHTML = "";
 
-    demoRows.forEach(row => {
-      const title = row.title;
-      const content = (row.content || "").trim();
+rows.forEach(row => {
+const title = row.title;
+const content = (row.content || "").trim();
 
-      // Surowce
-      if (content.includes("Price:")) {
-        let rawName = title; 
-        let rest = content;
-        if (content.includes("→")) { const split = content.split("→"); rawName = split[0].trim(); rest = split[1].trim(); }
-        const parts = {};
-        rest.split("|").map(x=>x.trim()).forEach(pair=>{ const ix = pair.indexOf(':'); if(ix>-1){ const k = pair.slice(0,ix).trim(); const v = pair.slice(ix+1).trim(); parts[k]=v;}});
-        const price = parts["Price"] ?? '—';
-        const daily = parts["Daily"] ?? '—';
-        const change = parts["Change"] ?? '—';
-        const weekly = parts["Weekly"] ?? '—';
-        const monthly = parts["Monthly"] ?? '—';
-        const ytd = parts["YTD"] ?? '—';
-        const yoy = parts["YoY"] ?? '—';
-        const date = parts["Date"] ? parseDate(parts["Date"]) : '—';
-        const match = rawName.match(/(.+?)\s*\((.+?)\)$/);
-        let displayName = makeLinkButton(rawName);
-        commBody.insertAdjacentHTML('beforeend',
-          `<tr>
-          <td>${displayName}</td><td class="small">${price}</td>
-          <td class="small">${renderColored(daily)}</td>
-          <td class="small">${renderColored(change)}</td>
-          <td class="small">${renderColored(weekly)}</td>
-          <td class="small">${renderColored(monthly)}</td>
-          <td class="small">${renderColored(ytd)}</td>
-          <td class="small">${renderColored(yoy)}</td>
-          <td class="small">${date}</td>
-          </tr>`);
-        return;
-      }
+// Surowce
+if (content.includes("Price:")) {
+let rawName = title;
+let rest = content;
+if (content.includes("→")) {
+const split = content.split("→");
+rawName = split[0].trim();
+rest = split[1].trim();
+}
+const parts = {};
+rest.split("|").map(x => x.trim()).forEach(pair => {
+const ix = pair.indexOf(':');
+if (ix > -1) {
+const k = pair.slice(0, ix).trim();
+const v = pair.slice(ix+1).trim();
+parts[k] = v;
+}
+});
+const price = parts["Price"] ?? '—';
+const daily = parts["Daily"] ?? '—';
+const change = parts["Change"] ?? '—';
+const weekly = parts["Weekly"] ?? '—';
+const monthly = parts["Monthly"] ?? '—';
+const ytd = parts["YTD"] ?? '—';
+const yoy = parts["YoY"] ?? '—';
+const date = parts["Date"] ? parseDate(parts["Date"]) : '—';
 
-      // Indeksy
-      const idxRegex = /:\s*([\d\s.,]+)\s*pkt, zmiana\s*([+\-]?\d[\d\s.,]*)\s*\(([-+]?\d[\d\s.,]*%)\)/i;
-      const m = content.match(idxRegex);
-      if (m) {
-        const priceRaw = m[1].trim(); const nominalRaw = m[2].trim(); const percentRaw = m[3].trim();
-        const sign = nominalRaw.includes("-")?"-":nominalRaw.includes("+")?"+":null;
-        idxBody.insertAdjacentHTML('beforeend',
-          `<tr>
-          <td>${makeLinkButton(addFlag(title))}</td>
-          <td class="small">${priceRaw}</td>
-          <td class="small">${renderColored(nominalRaw)}</td>
-          <td class="small">${renderColored(percentRaw, sign)}</td>
-          </tr>`);
-        return;
-      }
+const match = rawName.match(/(.+?)\s*\((.+?)\)$/);
+let displayName = `<strong>${rawName}</strong>`;
+if (match) {
+const nameOnly = match[1].trim();
+const unit = match[2].trim();
+displayName = `<strong>${nameOnly}</strong> <span class="unit">(${unit})</span>`;
+}
 
-      // Waluty / Obligacje
-      const valCandidate = content.replace(/\s/g,'').replace(',', '.');
-      if(valCandidate!=="" && !isNaN(Number(valCandidate))){
-        let value = content;
-        marketsBody.insertAdjacentHTML('beforeend',
-          `<tr>
-          <td>${makeLinkButton(addFlag(title))}</td>
-          <td class="small">${value}</td>
-          </tr>`);
-        return;
-      }
-    });
-  } catch(err) { console.error(err); }
+const forceSign = change.includes("-") ? "-" : change.includes("+") ? "+" : null;
+
+commBody.insertAdjacentHTML('beforeend',
+`<tr>
+<td><a href="${getLinkForItem(rawName)}" class="item-link">${displayName}</a></td>
+<td class="small">${price}</td>
+<td class="small">${renderColored(daily, forceSign)}</td>
+<td class="small">${renderColored(change)}</td>
+<td class="small">${renderColored(weekly)}</td>
+<td class="small">${renderColored(monthly)}</td>
+<td class="small">${renderColored(ytd)}</td>
+<td class="small">${renderColored(yoy)}</td>
+<td class="small">${date}</td>
+</tr>`);
+return;
+}
+
+// Indeksy
+const idxRegex = /:\s*([\d\s.,]+)\s*pkt, zmiana\s*([+\-]?\d[\d\s.,]*)\s*\(([-+]?\d[\d\s.,]*%)\)/i;
+const m = content.match(idxRegex);
+if (m) {
+const priceRaw = m[1].trim();
+const nominalRaw = m[2].trim();
+const percentRaw = m[3].trim();
+const sign = nominalRaw.includes("-") ? "-" : nominalRaw.includes("+") ? "+" : null;
+
+idxBody.insertAdjacentHTML('beforeend',
+`<tr>
+<td><a href="${getLinkForItem(title)}" class="item-link"><strong>${addFlag(title)}</strong></a></td>
+<td class="small">${priceRaw}</td>
+<td class="small">${renderColored(nominalRaw)}</td>
+<td class="small">${renderColored(percentRaw, sign)}</td>
+</tr>`);
+return;
+}
+
+// Waluty / Obligacje
+const valCandidate = content.replace(/\s/g,'').replace(',', '.');
+if (valCandidate !== "" && !isNaN(Number(valCandidate))) {
+let value = content;
+if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
+marketsBody.insertAdjacentHTML('beforeend',
+`<tr>
+<td><a href="${getLinkForItem(title)}" class="item-link"><strong>${addFlag(title)}</strong></a></td>
+<td class="small">${value}</td>
+</tr>`);
+return;
+}
+
+});
+} catch (err) {
+console.error(err);
+document.body.insertAdjacentHTML('beforeend', `<p style="color:red">Błąd: ${err.message}</p>`);
+}
 }
 
 fetchDashboard();
-setInterval(fetchDashboard,60000);
+setInterval(fetchDashboard, 60000);
 </script>
 </body>
 </html>
