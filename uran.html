@@ -83,6 +83,26 @@
       "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸"
     };
 
+    const urlMap = {
+      "Dow Jones": "https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html",
+      "DAX": "https://tradingeconomics.com/germany/stock-market",
+      "Nikkei": "https://tradingeconomics.com/japan/stock-market",
+      "Hang Seng Index": "https://tradingeconomics.com/hong-kong/stock-market",
+      "S&P 500": "https://tradingeconomics.com/spx:ind",
+      "Nasdaq": "https://tradingeconomics.com/ndaq:us",
+      "USD/PLN": "https://tradingeconomics.com/usdpln:cur",
+      "EUR/USD": "https://tradingeconomics.com/eurusd:cur",
+      "CHF/PLN": "https://tradingeconomics.com/chfpln:cur",
+      "BTC/USD": "https://www.coingecko.com/en/coins/bitcoin",
+      "US 10Y Bond": "https://tradingeconomics.com/united-states/government-bond-yield",
+      "Gold": "https://tradingeconomics.com/commodity/gold",
+      "Silver": "https://tradingeconomics.com/commodity/silver",
+      "Platinum": "https://tradingeconomics.com/commodity/platinum",
+      "Copper": "https://tradingeconomics.com/commodity/copper",
+      "Neodymium": "https://tradingeconomics.com/commodity/neodymium",
+      "Uranium": "https://tradingeconomics.com/commodity/uranium"
+    };
+
     function addFlag(title) {
       if (title.includes("/")) {
         const first = title.split("/")[0];
@@ -91,6 +111,13 @@
       for (const key in flagMap) {
         if (title.includes(key)) return flagMap[key] + " " + title;
       }
+      return title;
+    }
+
+    function linkify(title) {
+      const cleanTitle = title.replace(/\s*\(.*?\)/,'').trim(); // usuwa jednostki z nawiasów
+      const url = urlMap[cleanTitle] || urlMap[title];
+      if (url) return `<a href="${url}" target="_blank">${title}</a>`;
       return title;
     }
 
@@ -168,14 +195,13 @@
             const date = parts["Date"] ? parseDate(parts["Date"]) : '—';
 
             const match = rawName.match(/(.+?)\s*\((.+?)\)$/);
-            let displayName = `<strong>${rawName}</strong>`;
+            let displayName = `<strong>${linkify(rawName)}</strong>`;
             if (match) {
               const nameOnly = match[1].trim();
               const unit = match[2].trim();
-              displayName = `<strong>${nameOnly}</strong> <span class="unit">(${unit})</span>`;
+              displayName = `<strong>${linkify(nameOnly)}</strong> <span class="unit">(${unit})</span>`;
             }
 
-            // Daily kolorujemy wg znaku "Change"
             const forceSign = change.includes("-") ? "-" : change.includes("+") ? "+" : null;
 
             commBody.insertAdjacentHTML('beforeend', `
@@ -205,7 +231,7 @@
 
             idxBody.insertAdjacentHTML('beforeend', `
               <tr>
-                <td><strong>${addFlag(title)}</strong></td>
+                <td><strong>${linkify(addFlag(title))}</strong></td>
                 <td class="small">${priceRaw}</td>
                 <td class="small">${renderColored(nominalRaw)}</td>
                 <td class="small">${renderColored(percentRaw, sign)}</td>
@@ -221,7 +247,7 @@
             if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
             marketsBody.insertAdjacentHTML('beforeend', `
               <tr>
-                <td><strong>${addFlag(title)}</strong></td>
+                <td><strong>${linkify(addFlag(title))}</strong></td>
                 <td class="small">${value}</td>
               </tr>
             `);
