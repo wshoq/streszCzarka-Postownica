@@ -78,7 +78,8 @@ const flagMap = {
   "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸"
 };
 
-const urlMap = {
+// Hiperłącza dla konkretnych nazw
+const linkMap = {
   "Dow Jones": "https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html",
   "DAX": "https://tradingeconomics.com/germany/stock-market",
   "Nikkei": "https://tradingeconomics.com/japan/stock-market",
@@ -106,8 +107,8 @@ function addFlag(title) {
 }
 
 function linkify(title) {
-  let cleanTitle = title.replace(/\s*\(.*?\)/,'').trim();
-  const url = urlMap[cleanTitle] || urlMap[title];
+  const cleanTitle = title.replace(/\s*\(.*?\)/,'').trim();
+  const url = linkMap[cleanTitle] || linkMap[title];
   if (url) return `<a href="${url}" target="_blank">${title}</a>`;
   return title;
 }
@@ -214,10 +215,10 @@ async function fetchDashboard() {
         const nominalRaw = m[2].trim();
         const percentRaw = m[3].trim();
         const sign = nominalRaw.includes("-") ? "-" : nominalRaw.includes("+") ? "+" : null;
-        const cleanName = title.replace(/\s*\(.*?\)/,'').trim();
+
         idxBody.insertAdjacentHTML('beforeend', `
           <tr>
-            <td><strong>${linkify(addFlag(cleanName))}</strong></td>
+            <td><strong>${linkify(addFlag(title))}</strong></td>
             <td class="small">${priceRaw}</td>
             <td class="small">${renderColored(nominalRaw)}</td>
             <td class="small">${renderColored(percentRaw, sign)}</td>
@@ -231,10 +232,9 @@ async function fetchDashboard() {
       if (valCandidate !== "" && !isNaN(Number(valCandidate))) {
         let value = content;
         if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
-        const cleanName = title.replace(/\s*\(.*?\)/,'').trim();
         marketsBody.insertAdjacentHTML('beforeend', `
           <tr>
-            <td><strong>${linkify(addFlag(cleanName))}</strong></td>
+            <td><strong>${linkify(addFlag(title))}</strong></td>
             <td class="small">${value}</td>
           </tr>
         `);
