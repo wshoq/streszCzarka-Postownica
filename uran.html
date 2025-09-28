@@ -26,7 +26,6 @@ a.item-link:hover { text-decoration:underline; }
 <h1>📊 Dashboard Markets</h1>
 <div class="grid">
 <div>
-<!-- przycisk powrotu -->
 <a href="index.html" class="back-btn">← Powrót do streszCzarki</a>
 <h2>📈 Indeksy</h2>
 <table id="indexes-table">
@@ -101,12 +100,28 @@ const yearShort = new Date().getFullYear().toString().slice(-2);
 return `${dayStr}.${month}.${yearShort}`;
 }
 
-// Funkcja, która zamienia tytuł w link
+// Funkcja zwracająca linki wg listy
 function getLinkForItem(title) {
-const cleanTitle = title.replace(/\s+/g,'-').toLowerCase();
-if (/^.*(index|dow|s&p|nasdaq|dax|nikkei|hang seng).*$/i.test(title)) return `https://www.google.com/search?q=${encodeURIComponent(title)}`;
-if (/bond|usd|eur|pln|gbp|chf|jpy|btc/i.test(title)) return `https://www.xe.com/currency/${cleanTitle}`;
-return `https://www.investing.com/commodities/${cleanTitle}`;
+switch(title) {
+case "DAX": return "https://tradingeconomics.com/germany/stock-market";
+case "Nikkei": return "https://tradingeconomics.com/japan/stock-market";
+case "Hang Seng Index": return "https://tradingeconomics.com/hong-kong/stock-market";
+case "S&P 500": return "https://tradingeconomics.com/spx:ind";
+case "Nasdaq": return "https://tradingeconomics.com/ndaq:us";
+case "Dow Jones": return "https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html";
+case "USD/PLN": return "https://tradingeconomics.com/usdpln:cur";
+case "EUR/USD": return "https://tradingeconomics.com/eurusd:cur";
+case "CHF/PLN": return "https://tradingeconomics.com/chfpln:cur";
+case "BTC/USD": return "https://www.coingecko.com/en/coins/bitcoin";
+case "US 10Y Bond": return "https://tradingeconomics.com/united-states/government-bond-yield";
+case "Gold": return "https://tradingeconomics.com/commodity/gold";
+case "Silver": return "https://tradingeconomics.com/commodity/silver";
+case "Platinum": return "https://tradingeconomics.com/commodity/platinum";
+case "Copper": return "https://tradingeconomics.com/commodity/copper";
+case "Neodymium": return "https://tradingeconomics.com/commodity/neodymium";
+case "Uranium": return "https://tradingeconomics.com/commodity/uranium";
+default: return "#";
+}
 }
 
 async function fetchDashboard() {
