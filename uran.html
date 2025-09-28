@@ -185,7 +185,7 @@ const forceSign = change.includes("-") ? "-" : change.includes("+") ? "+" : null
 
 commBody.insertAdjacentHTML('beforeend',
 `<tr>
-<td><a href="${getLinkForItem(rawName)}" class="item-link">${displayName}</a></td>
+<td><a href="${getLinkForItem(rawName)}" class="item-link" target="_blank">${displayName}</a></td>
 <td class="small">${price}</td>
 <td class="small">${renderColored(daily, forceSign)}</td>
 <td class="small">${renderColored(change)}</td>
@@ -209,7 +209,7 @@ const sign = nominalRaw.includes("-") ? "-" : nominalRaw.includes("+") ? "+" : n
 
 idxBody.insertAdjacentHTML('beforeend',
 `<tr>
-<td><a href="${getLinkForItem(title)}" class="item-link"><strong>${addFlag(title)}</strong></a></td>
+<td><a href="${getLinkForItem(title)}" class="item-link" target="_blank"><strong>${addFlag(title)}</strong></a></td>
 <td class="small">${priceRaw}</td>
 <td class="small">${renderColored(nominalRaw)}</td>
 <td class="small">${renderColored(percentRaw, sign)}</td>
@@ -224,7 +224,7 @@ let value = content;
 if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
 marketsBody.insertAdjacentHTML('beforeend',
 `<tr>
-<td><a href="${getLinkForItem(title)}" class="item-link"><strong>${addFlag(title)}</strong></a></td>
+<td><a href="${getLinkForItem(title)}" class="item-link" target="_blank"><strong>${addFlag(title)}</strong></a></td>
 <td class="small">${value}</td>
 </tr>`);
 return;
