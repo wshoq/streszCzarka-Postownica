@@ -15,8 +15,6 @@
     .negative { color:red; font-weight:bold; }
     .unit { font-size:0.82em; color:#666; font-weight:normal; margin-left:6px; }
     .small { font-size:0.9em; color:#555; }
-
-    /* Styl przycisku powrotu */
     .back-btn {
       display:inline-block;
       margin-bottom:0.5rem;
@@ -30,239 +28,228 @@
       text-decoration:none;
       transition:background 0.2s ease;
     }
-    .back-btn:hover {
-      background:#ccc;
-    }
+    .back-btn:hover { background:#ccc; }
   </style>
 </head>
 <body>
-  <h1>📊 Dashboard Markets</h1>
+<h1>📊 Dashboard Markets</h1>
 
-  <div class="grid">
-    <div>
-      <!-- przycisk powrotu -->
-      <a href="index.html" class="back-btn">← Powrót do streszCzarki</a>
-      <h2>📈 Indeksy</h2>
-      <table id="indexes-table">
-        <thead>
-          <tr><th>Nazwa</th><th>Cena</th><th>Zmiana (nom.)</th><th>Zmiana (%)</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div>
-      <h2>💱 Waluty & Obligacje</h2>
-      <table id="markets-table">
-        <thead>
-          <tr><th>Nazwa</th><th>Wartość</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+<div class="grid">
+  <div>
+    <a href="index.html" class="back-btn">← Powrót do streszCzarki</a>
+    <h2>📈 Indeksy</h2>
+    <table id="indexes-table">
+      <thead>
+        <tr><th>Nazwa</th><th>Cena</th><th>Zmiana (nom.)</th><th>Zmiana (%)</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
-  <h2>⚒️ Surowce</h2>
-  <table id="commodities-table">
-    <thead>
-      <tr>
-        <th>Nazwa</th><th>Cena</th><th>Daily</th><th>Change (%)</th>
-        <th>Weekly</th><th>Monthly</th><th>YTD</th><th>YoY</th><th>Data</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div>
+    <h2>💱 Waluty & Obligacje</h2>
+    <table id="markets-table">
+      <thead>
+        <tr><th>Nazwa</th><th>Wartość</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-  <script>
-    const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
+<h2>⚒️ Surowce</h2>
+<table id="commodities-table">
+  <thead>
+    <tr>
+      <th>Nazwa</th><th>Cena</th><th>Daily</th><th>Change (%)</th>
+      <th>Weekly</th><th>Monthly</th><th>YTD</th><th>YoY</th><th>Data</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-    const flagMap = {
-      "USD": "🇺🇸", "EUR": "🇪🇺", "PLN": "🇵🇱", "CHF": "🇨🇭", "GBP": "🇬🇧", "JPY": "🇯🇵", "BTC": "₿",
-      "Nikkei": "🇯🇵", "Hang Seng": "🇭🇰", "DAX": "🇩🇪",
-      "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸"
-    };
+<script>
+const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
-    const urlMap = {
-      "Dow Jones": "https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html",
-      "DAX": "https://tradingeconomics.com/germany/stock-market",
-      "Nikkei": "https://tradingeconomics.com/japan/stock-market",
-      "Hang Seng Index": "https://tradingeconomics.com/hong-kong/stock-market",
-      "S&P 500": "https://tradingeconomics.com/spx:ind",
-      "Nasdaq": "https://tradingeconomics.com/ndaq:us",
-      "USD/PLN": "https://tradingeconomics.com/usdpln:cur",
-      "EUR/USD": "https://tradingeconomics.com/eurusd:cur",
-      "CHF/PLN": "https://tradingeconomics.com/chfpln:cur",
-      "BTC/USD": "https://www.coingecko.com/en/coins/bitcoin",
-      "US 10Y Bond": "https://tradingeconomics.com/united-states/government-bond-yield",
-      "Gold": "https://tradingeconomics.com/commodity/gold",
-      "Silver": "https://tradingeconomics.com/commodity/silver",
-      "Platinum": "https://tradingeconomics.com/commodity/platinum",
-      "Copper": "https://tradingeconomics.com/commodity/copper",
-      "Neodymium": "https://tradingeconomics.com/commodity/neodymium",
-      "Uranium": "https://tradingeconomics.com/commodity/uranium"
-    };
+const flagMap = {
+  "USD": "🇺🇸", "EUR": "🇪🇺", "PLN": "🇵🇱", "CHF": "🇨🇭", "GBP": "🇬🇧", "JPY": "🇯🇵", "BTC": "₿",
+  "Nikkei": "🇯🇵", "Hang Seng": "🇭🇰", "DAX": "🇩🇪",
+  "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸"
+};
 
-    function addFlag(title) {
-      if (title.includes("/")) {
-        const first = title.split("/")[0];
-        if (flagMap[first]) return flagMap[first] + " " + title;
-      }
-      for (const key in flagMap) {
-        if (title.includes(key)) return flagMap[key] + " " + title;
-      }
-      return title;
-    }
+const urlMap = {
+  "Dow Jones": "https://tradingeconomics.com/united-states/dow-jones-industrial-average-fed-data.html",
+  "DAX": "https://tradingeconomics.com/germany/stock-market",
+  "Nikkei": "https://tradingeconomics.com/japan/stock-market",
+  "Hang Seng Index": "https://tradingeconomics.com/hong-kong/stock-market",
+  "S&P 500": "https://tradingeconomics.com/spx:ind",
+  "Nasdaq": "https://tradingeconomics.com/ndaq:us",
+  "USD/PLN": "https://tradingeconomics.com/usdpln:cur",
+  "EUR/USD": "https://tradingeconomics.com/eurusd:cur",
+  "CHF/PLN": "https://tradingeconomics.com/chfpln:cur",
+  "BTC/USD": "https://www.coingecko.com/en/coins/bitcoin",
+  "US 10Y Bond": "https://tradingeconomics.com/united-states/government-bond-yield",
+  "Gold": "https://tradingeconomics.com/commodity/gold",
+  "Silver": "https://tradingeconomics.com/commodity/silver",
+  "Platinum": "https://tradingeconomics.com/commodity/platinum",
+  "Copper": "https://tradingeconomics.com/commodity/copper",
+  "Neodymium": "https://tradingeconomics.com/commodity/neodymium",
+  "Uranium": "https://tradingeconomics.com/commodity/uranium"
+};
 
-    function linkify(title) {
-      const cleanTitle = title.replace(/\s*\(.*?\)/,'').trim(); // usuwa jednostki z nawiasów
-      const url = urlMap[cleanTitle] || urlMap[title];
-      if (url) return `<a href="${url}" target="_blank">${title}</a>`;
-      return title;
-    }
+function addFlag(title) {
+  for (const key in flagMap) {
+    if (title.includes(key)) return flagMap[key] + " " + title;
+  }
+  return title;
+}
 
-    function renderColored(value, forceSign = null){
-      if (!value || value === '—') return '—';
-      const cleaned = value.replace(/\s/g,'').replace(',','.').replace('%','');
-      let n = parseFloat(cleaned);
-      if (isNaN(n)) return value;
-      if (forceSign === "+") n = Math.abs(n);
-      if (forceSign === "-") n = -Math.abs(n);
-      if (n > 0) return `<span class="positive">${value}</span>`;
-      if (n < 0) return `<span class="negative">${value}</span>`;
-      return value;
-    }
+function linkify(title) {
+  let cleanTitle = title.replace(/\s*\(.*?\)/,'').trim();
+  const url = urlMap[cleanTitle] || urlMap[title];
+  if (url) return `<a href="${url}" target="_blank">${title}</a>`;
+  return title;
+}
 
-    function parseDate(dateStr) {
-      if (!dateStr) return '—';
-      const parts = dateStr.split('/');
-      if (parts.length !== 2) return dateStr;
-      const [mon, day] = parts;
-      const monthMap = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
-      const month = monthMap[mon] || "01";
-      const dayStr = day.padStart(2,'0');
-      const yearShort = new Date().getFullYear().toString().slice(-2);
-      return `${dayStr}.${month}.${yearShort}`;
-    }
+function renderColored(value, forceSign = null){
+  if (!value || value === '—') return '—';
+  const cleaned = value.replace(/\s/g,'').replace(',','.').replace('%','');
+  let n = parseFloat(cleaned);
+  if (isNaN(n)) return value;
+  if (forceSign === "+") n = Math.abs(n);
+  if (forceSign === "-") n = -Math.abs(n);
+  if (n > 0) return `<span class="positive">${value}</span>`;
+  if (n < 0) return `<span class="negative">${value}</span>`;
+  return value;
+}
 
-    async function fetchDashboard() {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content`, {
-          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-        });
-        if (!res.ok) throw new Error("Błąd sieci: " + res.status);
-        const rows = await res.json();
+function parseDate(dateStr) {
+  if (!dateStr) return '—';
+  const parts = dateStr.split('/');
+  if (parts.length !== 2) return dateStr;
+  const [mon, day] = parts;
+  const monthMap = {Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
+  const month = monthMap[mon] || "01";
+  const dayStr = day.padStart(2,'0');
+  const yearShort = new Date().getFullYear().toString().slice(-2);
+  return `${dayStr}.${month}.${yearShort}`;
+}
 
-        const idxBody = document.querySelector("#indexes-table tbody");
-        const marketsBody = document.querySelector("#markets-table tbody");
-        const commBody = document.querySelector("#commodities-table tbody");
+async function fetchDashboard() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/dashboard?select=title,content`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error("Błąd sieci: " + res.status);
+    const rows = await res.json();
 
-        idxBody.innerHTML = "";
-        marketsBody.innerHTML = "";
-        commBody.innerHTML = "";
+    const idxBody = document.querySelector("#indexes-table tbody");
+    const marketsBody = document.querySelector("#markets-table tbody");
+    const commBody = document.querySelector("#commodities-table tbody");
 
-        rows.forEach(row => {
-          const title = row.title;
-          const content = (row.content || "").trim();
+    idxBody.innerHTML = "";
+    marketsBody.innerHTML = "";
+    commBody.innerHTML = "";
 
-          // Surowce
-          if (content.includes("Price:")) {
-            let rawName = title;
-            let rest = content;
-            if (content.includes("→")) {
-              const split = content.split("→");
-              rawName = split[0].trim();
-              rest = split[1].trim();
-            }
+    rows.forEach(row => {
+      const title = row.title;
+      const content = (row.content || "").trim();
 
-            const parts = {};
-            rest.split("|").map(x => x.trim()).forEach(pair => {
-              const ix = pair.indexOf(':');
-              if (ix > -1) {
-                const k = pair.slice(0, ix).trim();
-                const v = pair.slice(ix+1).trim();
-                parts[k] = v;
-              }
-            });
-
-            const price = parts["Price"] ?? '—';
-            const daily = parts["Daily"] ?? '—';
-            const change = parts["Change"] ?? '—';
-            const weekly = parts["Weekly"] ?? '—';
-            const monthly = parts["Monthly"] ?? '—';
-            const ytd = parts["YTD"] ?? '—';
-            const yoy = parts["YoY"] ?? '—';
-            const date = parts["Date"] ? parseDate(parts["Date"]) : '—';
-
-            const match = rawName.match(/(.+?)\s*\((.+?)\)$/);
-            let displayName = `<strong>${linkify(rawName)}</strong>`;
-            if (match) {
-              const nameOnly = match[1].trim();
-              const unit = match[2].trim();
-              displayName = `<strong>${linkify(nameOnly)}</strong> <span class="unit">(${unit})</span>`;
-            }
-
-            const forceSign = change.includes("-") ? "-" : change.includes("+") ? "+" : null;
-
-            commBody.insertAdjacentHTML('beforeend', `
-              <tr>
-                <td>${displayName}</td>
-                <td class="small">${price}</td>
-                <td class="small">${renderColored(daily, forceSign)}</td>
-                <td class="small">${renderColored(change)}</td>
-                <td class="small">${renderColored(weekly)}</td>
-                <td class="small">${renderColored(monthly)}</td>
-                <td class="small">${renderColored(ytd)}</td>
-                <td class="small">${renderColored(yoy)}</td>
-                <td class="small">${date}</td>
-              </tr>
-            `);
-            return;
-          }
-
-          // Indeksy
-          const idxRegex = /:\s*([\d\s.,]+)\s*pkt, zmiana\s*([+\-]?\d[\d\s.,]*)\s*\(([-+]?\d[\d\s.,]*%)\)/i;
-          const m = content.match(idxRegex);
-          if (m) {
-            const priceRaw = m[1].trim();
-            const nominalRaw = m[2].trim();
-            const percentRaw = m[3].trim();
-            const sign = nominalRaw.includes("-") ? "-" : nominalRaw.includes("+") ? "+" : null;
-
-            idxBody.insertAdjacentHTML('beforeend', `
-              <tr>
-                <td><strong>${linkify(addFlag(title))}</strong></td>
-                <td class="small">${priceRaw}</td>
-                <td class="small">${renderColored(nominalRaw)}</td>
-                <td class="small">${renderColored(percentRaw, sign)}</td>
-              </tr>
-            `);
-            return;
-          }
-
-          // Waluty / Obligacje
-          const valCandidate = content.replace(/\s/g,'').replace(',', '.');
-          if (valCandidate !== "" && !isNaN(Number(valCandidate))) {
-            let value = content;
-            if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
-            marketsBody.insertAdjacentHTML('beforeend', `
-              <tr>
-                <td><strong>${linkify(addFlag(title))}</strong></td>
-                <td class="small">${value}</td>
-              </tr>
-            `);
-            return;
-          }
+      // Surowce
+      if (content.includes("Price:")) {
+        let rawName = title;
+        let rest = content;
+        if (content.includes("→")) {
+          const split = content.split("→");
+          rawName = split[0].trim();
+          rest = split[1].trim();
+        }
+        const parts = {};
+        rest.split("|").map(x => x.trim()).forEach(pair => {
+          const ix = pair.indexOf(':');
+          if (ix > -1) parts[pair.slice(0, ix).trim()] = pair.slice(ix+1).trim();
         });
 
-      } catch (err) {
-        console.error(err);
-        document.body.insertAdjacentHTML('beforeend', `<p style="color:red">Błąd: ${err.message}</p>`);
-      }
-    }
+        const price = parts["Price"] ?? '—';
+        const daily = parts["Daily"] ?? '—';
+        const change = parts["Change"] ?? '—';
+        const weekly = parts["Weekly"] ?? '—';
+        const monthly = parts["Monthly"] ?? '—';
+        const ytd = parts["YTD"] ?? '—';
+        const yoy = parts["YoY"] ?? '—';
+        const date = parts["Date"] ? parseDate(parts["Date"]) : '—';
 
-    fetchDashboard();
-    setInterval(fetchDashboard, 60000);
-  </script>
+        const match = rawName.match(/(.+?)\s*\((.+?)\)$/);
+        let displayName = `<strong>${linkify(rawName)}</strong>`;
+        if (match) {
+          const nameOnly = match[1].trim();
+          const unit = match[2].trim();
+          displayName = `<strong>${linkify(nameOnly)}</strong> <span class="unit">(${unit})</span>`;
+        }
+
+        const forceSign = change.includes("-") ? "-" : change.includes("+") ? "+" : null;
+
+        commBody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${displayName}</td>
+            <td class="small">${price}</td>
+            <td class="small">${renderColored(daily, forceSign)}</td>
+            <td class="small">${renderColored(change)}</td>
+            <td class="small">${renderColored(weekly)}</td>
+            <td class="small">${renderColored(monthly)}</td>
+            <td class="small">${renderColored(ytd)}</td>
+            <td class="small">${renderColored(yoy)}</td>
+            <td class="small">${date}</td>
+          </tr>
+        `);
+        return;
+      }
+
+      // Indeksy
+      const idxRegex = /:\s*([\d\s.,]+)\s*pkt, zmiana\s*([+\-]?\d[\d\s.,]*)\s*\(([-+]?\d[\d\s.,]*%)\)/i;
+      const m = content.match(idxRegex);
+      if (m) {
+        const priceRaw = m[1].trim();
+        const nominalRaw = m[2].trim();
+        const percentRaw = m[3].trim();
+        const sign = nominalRaw.includes("-") ? "-" : nominalRaw.includes("+") ? "+" : null;
+        const cleanName = title.replace(/\s*\(.*?\)/,'').trim();
+        idxBody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><strong>${linkify(addFlag(cleanName))}</strong></td>
+            <td class="small">${priceRaw}</td>
+            <td class="small">${renderColored(nominalRaw)}</td>
+            <td class="small">${renderColored(percentRaw, sign)}</td>
+          </tr>
+        `);
+        return;
+      }
+
+      // Waluty / Obligacje
+      const valCandidate = content.replace(/\s/g,'').replace(',', '.');
+      if (valCandidate !== "" && !isNaN(Number(valCandidate))) {
+        let value = content;
+        if (/bond/i.test(title) && !value.trim().endsWith('%')) value = value.trim() + '%';
+        const cleanName = title.replace(/\s*\(.*?\)/,'').trim();
+        marketsBody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td><strong>${linkify(addFlag(cleanName))}</strong></td>
+            <td class="small">${value}</td>
+          </tr>
+        `);
+        return;
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    document.body.insertAdjacentHTML('beforeend', `<p style="color:red">Błąd: ${err.message}</p>`);
+  }
+}
+
+fetchDashboard();
+setInterval(fetchDashboard, 60000);
+</script>
 </body>
 </html>
