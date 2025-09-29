@@ -60,16 +60,23 @@ const SUPABASE_URL = "https://uybpjjqvtcpsxihpbhlp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5YnBqanF2dGNwc3hpaHBiaGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MzMxOTksImV4cCI6MjA2NjAwOTE5OX0.t2amEymFNyEr7bEZ4_p5qX5zxdpx60m3vlyyj2uZkdc";
 
 const flagMap = {
-"USD": "🇺🇸", "EUR": "🇪🇺", "PLN": "🇵🇱", "CHF": "🇨🇭", "GBP": "🇬🇧",
-"JPY": "🇯🇵", "BTC": "₿", "Nikkei": "🇯🇵", "Hang Seng": "🇭🇰",
-"DAX": "🇩🇪", "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸"
+  "USD": "🇺🇸", "EUR": "🇪🇺", "PLN": "🇵🇱", "CHF": "🇨🇭", "GBP": "🇬🇧",
+  "JPY": "🇯🇵", "BTC": "₿", "Nikkei": "🇯🇵", "Hang Seng": "🇭🇰",
+  "DAX": "🇩🇪", "S&P": "🇺🇸", "Dow Jones": "🇺🇸", "Nasdaq": "🇺🇸",
+  "US 10Y Bond": "🇺🇸"
 };
 
 function addFlag(title) {
-for (const key in flagMap) {
-if (title.includes(key)) return flagMap[key] + " " + title;
-}
-return title;
+  // jeśli para walutowa: bierzemy pierwszą walutę przed "/"
+  if (title.includes("/")) {
+    const first = title.split("/")[0].trim();
+    if (flagMap[first]) return flagMap[first] + " " + title;
+  }
+  // dla pozostałych dopasowań
+  for (const key in flagMap) {
+    if (title.includes(key)) return flagMap[key] + " " + title;
+  }
+  return title;
 }
 
 function renderColored(value, forceSign = null){
