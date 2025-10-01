@@ -128,4 +128,88 @@
     const prevDayBtn = document.getElementById('prevDayBtn');
     const nextDayBtn = document.getElementById('nextDayBtn');
 
-    // Wyciąga datę z tytułu
+    // Parsowanie daty z tytułu (np. "01.10.2025, 13:00:28")
+    function parseTitleDateToISO(titleDate) {
+      if (!titleDate) return null;
+      const clean = titleDate.trim().replace(/\u00A0/g, " "); 
+      const datePart = clean.includes(",") ? clean.split(",")[0].trim() : clean.split(" ")[0].trim();
+      const [day, month, year] = datePart.split(".");
+      if (!day || !month || !year) return null;
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    }
+
+    function markdownLinksToHTML(text) {
+      return text.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    }
+
+    function formatContentForHTML(text) {
+      let html = text.replace(/---/g, '<hr />');
+      html = html.split(/\n{2,}/)
+        .map(block => block.trim())
+        .filter(Boolean)
+        .map(block => `<p>${markdownLinksToHTML(block)}</p>`)
+        .join('');
+      return html;
+    }
+
+    function fetchPosts() {
+      container.innerHTML = "Ładowanie...";
+
+      fetch(`${SUPABASE_URL}/rest/v1/posts?select=title,content&order=title.desc&limit=100`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.ok ? res.json() : Promise.reject(`Błąd sieci: ${res.status}`))
+      .then(posts => {
+        const selectedDate = datePicker.value;
+        if (!selectedDate) {
+          container.innerHTML = '<p>Wybierz datę, aby zobaczyć artykuły.</p>';
+          return;
+        }
+
+        const filteredPosts = posts.filter(post => {
+          const postDateISO = parseTitleDateToISO(post.title);
+          console.log("DEBUG:", post.title, "->", postDateISO, "vs", selectedDate);
+          return postDateISO === selectedDate;
+        });
+
+        if (filteredPosts.length === 0) {
+          container.innerHTML = `<p>Brak artykułów na dzień ${selectedDate}.</p>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        filteredPosts.forEach(post => {
+          const contentHTML = formatContentForHTML(post.content);
+          container.innerHTML += `<article><h2>${post.title}</h2>${contentHTML}</article>`;
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        container.innerHTML = `<p>Błąd podczas ładowania postów: ${err}</p>`;
+      });
+    }
+
+    function shiftDate(days) {
+      const current = new Date(datePicker.value);
+      current.setDate(current.getDate() + days);
+      const iso = current.toISOString().split('T')[0];
+      datePicker.value = iso;
+      fetchPosts();
+    }
+
+    prevDayBtn.addEventListener('click', () => shiftDate(-1));
+    nextDayBtn.addEventListener('click', () => shiftDate(1));
+    datePicker.addEventListener('change', fetchPosts);
+
+    // ustaw datę dzisiejszą na starcie
+    const today = new Date().toISOString().split('T')[0];
+    datePicker.value = today;
+    fetchPosts();
+  </script>
+</body>
+</html>
