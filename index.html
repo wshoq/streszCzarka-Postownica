@@ -109,6 +109,7 @@
       <span class="icon">📊</span>
       Market dashboard
     </a>
+    <!-- Wodór usunięty -->
   </div>
 
   <div class="date-controls">
@@ -129,7 +130,8 @@
     const nextDayBtn = document.getElementById('nextDayBtn');
 
     function parseTitleDateToISO(titleDate) {
-      const datePart = titleDate.trim().slice(0, 10); // dd.mm.yyyy
+      const clean = titleDate.trim().replace(/\u00A0/g, ""); // usuń spacje i NBSP
+      const datePart = clean.slice(0, 10); // tylko dd.mm.yyyy
       const [day, month, year] = datePart.split('.');
       return `${year}-${month}-${day}`;
     }
@@ -170,6 +172,7 @@
         const filteredPosts = posts.filter(post => {
           if (!post.title) return false;
           const postDateISO = parseTitleDateToISO(post.title);
+          console.log("DEBUG:", post.title, "->", postDateISO, "vs", selectedDate);
           return postDateISO === selectedDate;
         });
 
