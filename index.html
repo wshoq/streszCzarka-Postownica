@@ -109,7 +109,6 @@
       <span class="icon">📊</span>
       Market dashboard
     </a>
-    <!-- Wodór usunięty -->
   </div>
 
   <div class="date-controls">
@@ -130,9 +129,9 @@
     const nextDayBtn = document.getElementById('nextDayBtn');
 
     function parseTitleDateToISO(titleDate) {
-      const [datePart] = titleDate.split(',');
-      const [day, month, year] = datePart.trim().split('.');
-      return `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+      const datePart = titleDate.trim().slice(0, 10); // dd.mm.yyyy
+      const [day, month, year] = datePart.split('.');
+      return `${year}-${month}-${day}`;
     }
 
     function markdownLinksToHTML(text) {
@@ -140,9 +139,7 @@
     }
 
     function formatContentForHTML(text) {
-      // Zamień --- na <hr>
       let html = text.replace(/---/g, '<hr />');
-      // Podziel po podwójnych enterach
       html = html.split(/\n{2,}/)
         .map(block => block.trim())
         .filter(Boolean)
@@ -205,11 +202,9 @@
     nextDayBtn.addEventListener('click', () => shiftDate(1));
     datePicker.addEventListener('change', fetchPosts);
 
-    // ustaw datę dzisiejszą na starcie i ładuj posty
     const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
     fetchPosts();
   </script>
 </body>
 </html>
-
