@@ -109,7 +109,6 @@
       <span class="icon">📊</span>
       Market dashboard
     </a>
-    <!-- Wodór usunięty -->
   </div>
 
   <div class="date-controls">
@@ -130,11 +129,9 @@
     const nextDayBtn = document.getElementById('nextDayBtn');
 
     function parseTitleDateToISO(titleDate) {
-      if (!titleDate) return null;
-      // wyciągnij dd.mm.yyyy z tytułu
-      const match = titleDate.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-      if (!match) return null;
-      const [_, day, month, year] = match;
+      const clean = titleDate.trim().replace(/\u00A0/g, ""); 
+      const datePart = clean.slice(0, 10); 
+      const [day, month, year] = datePart.split('.');
       return `${year}-${month}-${day}`;
     }
 
@@ -155,7 +152,7 @@
     function fetchPosts() {
       container.innerHTML = "Ładowanie...";
 
-      fetch(`${SUPABASE_URL}/rest/v1/posts?select=title,content&order=title.desc&limit=100`, {
+      fetch(`${SUPABASE_URL}/rest/v1/posts?select=id,title,content&order=id.desc&limit=100`, {
         headers: {
           apikey: SUPABASE_KEY,
           Authorization: `Bearer ${SUPABASE_KEY}`,
@@ -174,7 +171,6 @@
         const filteredPosts = posts.filter(post => {
           if (!post.title) return false;
           const postDateISO = parseTitleDateToISO(post.title);
-          console.log("DEBUG:", post.title, "->", postDateISO, "vs", selectedDate);
           return postDateISO === selectedDate;
         });
 
