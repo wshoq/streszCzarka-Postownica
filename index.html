@@ -105,10 +105,11 @@
   <h1>streszCzarka</h1>
 
   <div class="links">
-    <a href="uran.html" class="link-button" aria-label="Market Dashboard" target="_blank">
+    <a href="uran.html" class="link-button" aria-label="Market Dashboard">
       <span class="icon">📊</span>
       Market dashboard
     </a>
+    <!-- Wodór usunięty -->
   </div>
 
   <div class="date-controls">
@@ -130,15 +131,11 @@
 
     function parseTitleDateToISO(titleDate) {
       if (!titleDate) return null;
-      // Normalizacja i czyszczenie znaków
-      const clean = titleDate
-        .normalize("NFKC")
-        .replace(/\u00A0/g, " ")
-        .trim()
-        .slice(0, 10);
-      const [day, month, year] = clean.split(".");
-      if (!day || !month || !year) return null;
-      return `${year}-${month.padStart(2,"0")}-${day.padStart(2,"0")}`;
+      // wyciągnij dd.mm.yyyy z tytułu
+      const match = titleDate.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+      if (!match) return null;
+      const [_, day, month, year] = match;
+      return `${year}-${month}-${day}`;
     }
 
     function markdownLinksToHTML(text) {
@@ -177,6 +174,7 @@
         const filteredPosts = posts.filter(post => {
           if (!post.title) return false;
           const postDateISO = parseTitleDateToISO(post.title);
+          console.log("DEBUG:", post.title, "->", postDateISO, "vs", selectedDate);
           return postDateISO === selectedDate;
         });
 
