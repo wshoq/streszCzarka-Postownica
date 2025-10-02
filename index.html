@@ -105,7 +105,7 @@
   <h1>streszCzarka</h1>
 
   <div class="links">
-    <a href="uran.html" class="link-button" aria-label="Market Dashboard">
+    <a href="uran.html" class="link-button" aria-label="Market Dashboard" target="_blank">
       <span class="icon">📊</span>
       Market dashboard
     </a>
@@ -128,14 +128,17 @@
     const prevDayBtn = document.getElementById('prevDayBtn');
     const nextDayBtn = document.getElementById('nextDayBtn');
 
-    // Parsowanie daty z tytułu (np. "01.10.2025, 13:00:28")
     function parseTitleDateToISO(titleDate) {
       if (!titleDate) return null;
-      const clean = titleDate.trim().replace(/\u00A0/g, " "); 
-      const datePart = clean.includes(",") ? clean.split(",")[0].trim() : clean.split(" ")[0].trim();
-      const [day, month, year] = datePart.split(".");
+      // Normalizacja i czyszczenie znaków
+      const clean = titleDate
+        .normalize("NFKC")
+        .replace(/\u00A0/g, " ")
+        .trim()
+        .slice(0, 10);
+      const [day, month, year] = clean.split(".");
       if (!day || !month || !year) return null;
-      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      return `${year}-${month.padStart(2,"0")}-${day.padStart(2,"0")}`;
     }
 
     function markdownLinksToHTML(text) {
@@ -172,8 +175,8 @@
         }
 
         const filteredPosts = posts.filter(post => {
+          if (!post.title) return false;
           const postDateISO = parseTitleDateToISO(post.title);
-          console.log("DEBUG:", post.title, "->", postDateISO, "vs", selectedDate);
           return postDateISO === selectedDate;
         });
 
@@ -206,8 +209,7 @@
     nextDayBtn.addEventListener('click', () => shiftDate(1));
     datePicker.addEventListener('change', fetchPosts);
 
-    // ustaw datę dzisiejszą na starcie
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
     fetchPosts();
   </script>
